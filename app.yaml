@@ -1,0 +1,13 @@
+application: rainydaycoder
+version: 1
+runtime: python
+api_version: 1
+
+handlers:
+
+- url: /(.*\.(gif|png|jpg|ico|js|html|rb|css|txt|xml|json|xo|xol|ogg|ogv|htm|swf|pdf))
+  static_files: static/\1
+  upload: static/(.*\.(gif|png|jpg|ico|js|html|rb|css|txt|xml|json|xo|xol|ogg|ogv|htm|swf|pdf))
+
+- url: /.*
+  script: homepage.py
