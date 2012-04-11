@@ -122,12 +122,14 @@ class HomePage(webapp.RequestHandler):
 						</li>
 					</ul>
 					<p>You can change cities or unsubscribe at any time.</p>
+					<iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Frainydaycoder.appspot.com&amp;send=false&amp;layout=standard&amp;width=450&amp;show_faces=false&amp;action=like&amp;colorscheme=light&amp;font&amp;height=35&amp;appId=123994207657251" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:450px; height:35px;" allowTransparency="true"></iframe>
 				</div>
 			</div>
 			<div class="row">
 				<div class="span12" style="text-align:center;">
 					<img src="http://b.vimeocdn.com/ps/702/702568_300.jpg" width="200"/>
-					<small>Image CC-BY-SA <a href="http://flickr.com/photos/solidether">solidether</a></small>
+					<br/><br/>
+					<small>Umbrella photo CC-BY-NC-SA <a href="http://flickr.com/photos/solidether">solidether</a></small>
 				</div>
 			</div>
 		</div>
