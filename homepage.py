@@ -71,7 +71,8 @@ class HomePage(webapp.RequestHandler):
 				<h1>Learn code</h1>
 				<p>on rainy nights and weekends</p>
 				<p>
-					<a class="btn btn-primary btn-large">
+					<input type="text" class="span3" placeholder="ZIPCODE"/>
+					<a class="btn btn-primary" style="vertical-align:top;">
 						Stay out of the rain
 					</a>
 				</p>
@@ -79,6 +80,7 @@ class HomePage(webapp.RequestHandler):
 			<div class="row">
 				<div class="span4">
 					<h3>Who teaches me to code?</h3>
+					<p>Work on your own, or choose one of these sites:</p>
 					<ul>
 						<li>
 							<strong><a href="http://codecademy.org" target="_blank">Codecademy</a></strong> is a free site to learn JavaScript. Backed by the White House and NYC Mayor Bloomberg.
@@ -92,7 +94,8 @@ class HomePage(webapp.RequestHandler):
 					</ul>
 				</div>
 				<div class="span4">
-					<h3>When are the classes?</h3>
+					<h3>When do I code?</h3>
+					<img src="http://farm2.staticflickr.com/1184/1084349065_3a55f1e974_m.jpg" alt="whenever there are umbrellas out" style="width:90%;"/>
 					<ul>
 						<li>
 							Rainy nights and weekends where you live
@@ -118,11 +121,13 @@ class HomePage(webapp.RequestHandler):
 							Text messages to most cell phone carriers
 						</li>
 					</ul>
+					<p>You can change cities or unsubscribe at any time.</p>
 				</div>
 			</div>
 			<div class="row">
 				<div class="span12" style="text-align:center;">
 					<img src="http://b.vimeocdn.com/ps/702/702568_300.jpg" width="200"/>
+					<small>Image CC-BY-SA <a href="http://flickr.com/photos/solidether">solidether</a></small>
 				</div>
 			</div>
 		</div>
