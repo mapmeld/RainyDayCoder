@@ -5,7 +5,7 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext import db
 from google.appengine.api.urlfetch import fetch,GET,POST
-import botconfig
+import botconfig, twitteroauth
 
 class HomePage(webapp.RequestHandler):
   def get(self):
@@ -301,7 +301,7 @@ class Region(webapp.RequestHandler):
 							self.tweetTo(coder)						
 					self.response.out.write( '<img src="' + icon + '"/><br/>' )
 
-		elif(coder.weekendonly == ""): # will code any night
+		elif(coder.weekendonly != "true"): # will code any night
 			today = days[datetime.now().weekday()] + " Night"
 			wjson = wjson.split("icon_url")
 			for day in wjson:
@@ -320,11 +320,11 @@ class Region(webapp.RequestHandler):
   def tweetTo(self, coder):
 	contactby = coder.contactmethod.split('|')[0]
 	contactname = coder.contactmethod.split('|')[1]
-	finished_format = "%s: #RainyDayCoder says it's going to rain. Time to catch up on Codecademy?"
+	finished_format = "@" + contactname.replace('@','').replace(' ','') + ": #RainyDayCoder says it's going to rain. Time to code?"
 	if(contactby == 'tweet'):
  	 	client = twitteroauth.TwitterClient(botconfig.consumer_key, botconfig.consumer_secret, botconfig.callback_url)
 		additional_params = {
-			"status": finished_format % (contactname.replace('@','').replace(' ','') )
+			"status": finished_format
 		}
 		result = client.make_request(
 			"http://twitter.com/statuses/update.json",
@@ -332,6 +332,7 @@ class Region(webapp.RequestHandler):
 			secret=botconfig.access_token_secret,
 			additional_params=additional_params,
 			method=POST)
+		logging.info(result.content)
 
 class Why(webapp.RequestHandler):
   def get(self):
