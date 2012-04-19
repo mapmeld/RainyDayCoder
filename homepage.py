@@ -70,12 +70,10 @@ class HomePage(webapp.RequestHandler):
 				<img src="http://i.imgur.com/ToJkV.png" style="float:left"/>
 				<h1>Learn code</h1>
 				<p>on rainy nights and weekends</p>
-				<p>
-					<input type="text" class="span3" placeholder="ZIPCODE"/>
-					<a class="btn btn-primary" style="vertical-align:top;">
-						Stay out of the rain
-					</a>
-				</p>
+				<form action="/subscribe" method="GET">
+					<input id="zip" name="zip" type="text" class="span3" placeholder="ZIPCODE"/>
+					<input type="submit" value="Stay out of the rain" class="btn btn-primary" style="vertical-align:top;"/>
+				</form>
 			</div>
 			<div class="row">
 				<div class="span4">
@@ -130,6 +128,108 @@ class HomePage(webapp.RequestHandler):
 					<img src="http://b.vimeocdn.com/ps/702/702568_300.jpg" width="200"/>
 					<br/><br/>
 					<small>Umbrella photo CC-BY-NC-SA <a href="http://flickr.com/photos/solidether">solidether</a></small>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>''')
+
+class Subscribe(webapp.RequestHandler):
+  def post(self):
+	c = Coder()
+	c.name = self.request.get('wkendonly')
+	c.region = self.request.get('wkendonly')
+	c.city = self.request.get('wkendonly')
+	c.contactmethod = self.request.get('wkendonly')
+	c.weekendonly = self.request.get('wkendonly')
+	c.put()
+
+  def get(self):
+	self.response.out.write('''<!DOCTYPE html>
+<html>
+	<head>
+		<title>Rainy Day Coder</title>
+		<link href="/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+		<script type="text/javascript">
+function checkEnter(e){
+	if(e.keyCode == 13){
+		subscribe();
+	}
+}
+function subscribe(){
+	window.location = "/subscribe?zip=" + document.getElementById("zip").value;
+}
+		</script>
+		<style type="text/css">
+.hero-unit{
+	padding: 40px;
+}
+		</style>
+	</head>
+	<body>
+		<div class="navbar">
+			<div class="navbar-inner">
+				<div class="container">
+					<ul class="nav">
+						<li>
+							<a class="brand" href="/">
+								Rainy Day Coder
+							</a>
+						</li>
+						<li>
+							<a href="/">
+								Home
+							</a>
+						</li>
+						<li>
+							<a href="/why">
+								Why code?
+							</a>
+						</li>
+						<li>
+							<a href="#">
+								Sign In
+							</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div class="container">
+			<div class="row">
+				<div class="hero-unit" style="text-align:center;">
+					<img src="http://i.imgur.com/ToJkV.png" style="float:left"/>
+					<h1>Coding in ''' + cgi.escape(self.request.get('zip')) + '''</h1>
+					<p>on rainy nights and weekends</p>
+				</div>
+			</div>
+			<div class="row">
+				<div class="well">
+					<h3>Some things you should know</h3>
+					<a href="http://www.rssweather.com/climate/" target="_blank">Look up your local climate</a>
+				</div>
+			</div>
+			<div class="row">
+				<form action="/subscriber" method="POST">
+					<input type="hidden" name="zip" value="''' + cgi.escape(self.request.get('zip')) + '''"/>
+					<div class="well">
+						<h3>How do we contact you?</h3>
+						<label class="radio"><input type="radio" name="contact" value="mail" checked="checked"/>E-mail</label>
+						<label class="radio"><input type="radio" name="contact" value="tweet"/>Twitter</label>
+						<label class="radio"><input type="radio" name="contact" value="txt"/>Text</label>
+						<h3>Enter address, username, or number here:</h3>
+						<input name="contactname" class="x-large"/>
+					</div>
+					<div class="well">
+						<h3>Weekends only?</h3>
+						<label class="checkbox"><input type="checkbox" name="wkendonly"/>Weekends only</label>
+					</div>
+					<input type="submit" class="btn btn-info" value="Sign Up"/>
+				</form>
+			</div>
+			<div class="row">
+				<div class="span12" style="text-align:center;">
+					<img src="http://b.vimeocdn.com/ps/702/702568_300.jpg" width="200"/>
 				</div>
 			</div>
 		</div>
@@ -235,6 +335,7 @@ class Coder(db.Model):
 application = webapp.WSGIApplication(
                                      [('/region.*', Region),
                                      ('/why.*', Why),
+                                     ('/subscribe.*', Subscribe),
                                      ('/.*', HomePage)],
                                      debug=True)
 
