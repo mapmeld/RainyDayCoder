@@ -1,10 +1,11 @@
-import cgi
+import cgi, logging
 from datetime import datetime
 
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext import db
 from google.appengine.api.urlfetch import fetch,GET,POST
+import botconfig
 
 class HomePage(webapp.RequestHandler):
   def get(self):
@@ -137,12 +138,13 @@ class HomePage(webapp.RequestHandler):
 class Subscribe(webapp.RequestHandler):
   def post(self):
 	c = Coder()
-	c.name = self.request.get('wkendonly')
-	c.region = self.request.get('wkendonly')
-	c.city = self.request.get('wkendonly')
-	c.contactmethod = self.request.get('wkendonly')
+	c.name = self.request.get('name')
+	c.city = self.request.get('zip')
+	c.region = ''
+	c.contactmethod = self.request.get('contact') + "|" + self.request.get('contactname')
 	c.weekendonly = self.request.get('wkendonly')
 	c.put()
+	self.redirect('/confirm')
 
   def get(self):
 	self.response.out.write('''<!DOCTYPE html>
@@ -150,16 +152,6 @@ class Subscribe(webapp.RequestHandler):
 	<head>
 		<title>Rainy Day Coder</title>
 		<link href="/bootstrap.min.css" rel="stylesheet" type="text/css"/>
-		<script type="text/javascript">
-function checkEnter(e){
-	if(e.keyCode == 13){
-		subscribe();
-	}
-}
-function subscribe(){
-	window.location = "/subscribe?zip=" + document.getElementById("zip").value;
-}
-		</script>
 		<style type="text/css">
 .hero-unit{
 	padding: 40px;
@@ -206,7 +198,9 @@ function subscribe(){
 			<div class="row">
 				<div class="well">
 					<h3>Some things you should know</h3>
-					<a href="http://www.rssweather.com/climate/" target="_blank">Look up your local climate</a>
+					<a href="http://maps.howstuffworks.com/united-states-annual-rainfall-map.htm" target="_blank">Total rainfall map</a>
+					<br/>
+					<a href="http://www.rssweather.com/climate/" target="_blank">Rain over the course of the year</a>
 				</div>
 			</div>
 			<div class="row">
@@ -285,8 +279,10 @@ class Region(webapp.RequestHandler):
 						# need to check that rainfall isn't so small!
 						if(day.find("Saturday Night") > -1):
 							self.response.out.write('Rain tonight in ' + coder.city + '!')
+							self.tweetTo(coder)
 						else:
 							self.response.out.write('Rain today in ' + coder.city + '!')						
+							self.tweetTo(coder)
 					self.response.out.write( '<img src="' + icon + '"/><br/>' )
 		elif(days[datetime.now().weekday()] == "Sunday"):
 			# check daytime first
@@ -299,11 +295,13 @@ class Region(webapp.RequestHandler):
 						# need to check that rainfall isn't so small!
 						if(day.find("Sunday Night") > -1):
 							self.response.out.write('Rain tonight in ' + coder.city + '!')
+							self.tweetTo(coder)
 						else:
-							self.response.out.write('Rain today in ' + coder.city + '!')						
+							self.response.out.write('Rain today in ' + coder.city + '!')
+							self.tweetTo(coder)						
 					self.response.out.write( '<img src="' + icon + '"/><br/>' )
 
-		elif(coder.weekendonly == "everyday"):
+		elif(coder.weekendonly == ""): # will code any night
 			today = days[datetime.now().weekday()] + " Night"
 			wjson = wjson.split("icon_url")
 			for day in wjson:
@@ -313,10 +311,27 @@ class Region(webapp.RequestHandler):
 					if(icon.find('rain') > -1 or icon.find('storm') > -1):
 						# need to check that rainfall isn't so small!
 						self.response.out.write('Rain tonight in ' + coder.city + '!')
+						self.tweetTo(coder)
 					self.response.out.write( '<img src="' + icon + '"/><br/>' )
 					break
 		
 	self.response.out.write('			</div>\n		</div>\n	</body>\n</html>')
+	
+  def tweetTo(self, coder):
+	contactby = coder.contactmethod.split('|')[0]
+	contactname = coder.contactmethod.split('|')[1]
+	finished_format = "%s: #RainyDayCoder says it's going to rain. Time to catch up on Codecademy?"
+	if(contactby == 'tweet'):
+ 	 	client = twitteroauth.TwitterClient(botconfig.consumer_key, botconfig.consumer_secret, botconfig.callback_url)
+		additional_params = {
+			"status": finished_format % (contactname.replace('@','').replace(' ','') )
+		}
+		result = client.make_request(
+			"http://twitter.com/statuses/update.json",
+			token=botconfig.access_token,
+			secret=botconfig.access_token_secret,
+			additional_params=additional_params,
+			method=POST)
 
 class Why(webapp.RequestHandler):
   def get(self):
