@@ -7,6 +7,7 @@ from google.appengine.ext import db
 from google.appengine.api.urlfetch import fetch,GET,POST
 from google.appengine.api import mail
 import botconfig, twitteroauth
+import phoneconfig, twilio
 
 class HomePage(webapp.RequestHandler):
   def get(self):
@@ -334,9 +335,9 @@ class Region(webapp.RequestHandler):
 		#	additional_params=additional_params,
 		#	method=POST)
 		#logging.info(result.content)
-		logging.info("Would send Tweet to " + contactname + " about " + coder.city)
+		logging.info("Would send Tweet to " + contactname + " in " + coder.city)
 	elif(contactby == "mail"):
-		logging.info("Would send e-mail to " + contactname + " about " + coder.city)
+		logging.info("Would send e-mail to " + contactname + " in " + coder.city)
 		if mail.is_email_valid(contactname):
 			sender_address = "korolev415@gmail.com"
 			subject = "Code on this Rainy Day"
@@ -344,7 +345,17 @@ class Region(webapp.RequestHandler):
 It's raining where you are! Time to go to Codecademy and start coding!
 
 -- Nick'''
-			mail.send_mail(sender_address, contactname, subject, body)		
+			mail.send_mail(sender_address, contactname, subject, body)
+	elif(contactby == "txt"):
+		outbody = "It's raining where you are! Time to go to Codecademy and learn to code!"
+		account = twilio.Account(phoneconfig.account, phoneconfig.token)
+		d = {
+			'From' : phoneconfig.number,
+			'To' : contactname,
+			'Body' : outbody,
+		}
+		#gotdata = account.request('/%s/Accounts/%s/SMS/Messages' % ('2008-08-01', phoneconfig.account), 'POST', d)
+		logging.info("Would send text to " + contactname + " in " + coder.city)
 
 class Map(webapp.RequestHandler):
   def get(self):
