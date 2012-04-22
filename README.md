@@ -20,7 +20,6 @@ This project is enthusiastically <strong>open source</strong> and welcomes your 
 
 TODO:
 <ul>
-<li>Add zipcode to state to region support via <a href="http://daspecster.github.com/ziptastic/index.html">Ziptastic</a></li>
 <li>Check each region daily, but don't contact weekenders or recently-contacted people</li>
 <li>Logging in and changing user settings</li>
 <li>Better answers on why to code</li>

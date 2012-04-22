@@ -149,6 +149,11 @@ class Subscribe(webapp.RequestHandler):
 	self.redirect('/confirm')
 
   def get(self):
+	cityjson = fetch("http://zip.elevenbasetwo.com/?zip=" + self.request.get('zip'), payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content
+	cityname = cityjson[ cityjson.find('city') + 8: len(cityjson) - 2 ]
+	cityname = cityname[0] + cityname[ 1 : len(cityname) ].lower()
+	cityname = cityname + ", " + cityjson[ cityjson.find("state")  + 9 : cityjson.find("state") + 11 ]
+
 	self.response.out.write('''<!DOCTYPE html>
 <html>
 	<head>
@@ -193,7 +198,7 @@ class Subscribe(webapp.RequestHandler):
 			<div class="row">
 				<div class="hero-unit" style="text-align:center;">
 					<img src="http://i.imgur.com/ToJkV.png" style="float:left"/>
-					<h1>Coding in ''' + cgi.escape(self.request.get('zip')) + '''</h1>
+					<h1>Coding in ''' + cityname + '''</h1>
 					<p>on rainy nights and weekends</p>
 				</div>
 			</div>
@@ -213,14 +218,14 @@ class Subscribe(webapp.RequestHandler):
 						<label class="radio"><input type="radio" name="contact" value="mail" checked="checked"/>E-mail</label>
 						<label class="radio"><input type="radio" name="contact" value="tweet"/>Twitter</label>
 						<label class="radio"><input type="radio" name="contact" value="txt"/>Text</label>
-						<h3>Enter address, username, or number here:</h3>
+						<h3>Enter e-mail, Twitter handle, or number here:</h3>
 						<input name="contactname" class="x-large"/>
 					</div>
 					<div class="well">
 						<h3>Weekends only?</h3>
 						<label class="checkbox"><input type="checkbox" name="wkendonly"/>Weekends only</label>
 					</div>
-					<input type="submit" class="btn btn-info" value="Sign Up"/>
+					<input type="submit" class="btn btn-info" value="Sign Up for Rainy Day Coder"/>
 				</form>
 			</div>
 			<div class="row">
@@ -281,10 +286,10 @@ class Region(webapp.RequestHandler):
 						# need to check that rainfall isn't so small!
 						if(day.find("Saturday Night") > -1):
 							self.response.out.write('Rain tonight in ' + coder.city + '!')
-							self.tweetTo(coder)
+							self.tweetTo(coder, "tonight")
 						else:
 							self.response.out.write('Rain today in ' + coder.city + '!')						
-							self.tweetTo(coder)
+							self.tweetTo(coder, "today")
 					self.response.out.write( '<img src="' + icon + '"/><br/>' )
 		elif(days[datetime.now().weekday()] == "Sunday"):
 			# check daytime first
@@ -297,10 +302,10 @@ class Region(webapp.RequestHandler):
 						# need to check that rainfall isn't so small!
 						if(day.find("Sunday Night") > -1):
 							self.response.out.write('Rain tonight in ' + coder.city + '!')
-							self.tweetTo(coder)
+							self.tweetTo(coder, "tonight")
 						else:
 							self.response.out.write('Rain today in ' + coder.city + '!')
-							self.tweetTo(coder)						
+							self.tweetTo(coder, "today")
 					self.response.out.write( '<img src="' + icon + '"/><br/>' )
 
 		elif(coder.weekendonly != "true"): # will code any night
@@ -313,16 +318,16 @@ class Region(webapp.RequestHandler):
 					if(icon.find('rain') > -1 or icon.find('storm') > -1):
 						# need to check that rainfall isn't so small!
 						self.response.out.write('Rain tonight in ' + coder.city + '!')
-						self.tweetTo(coder)
+						self.tweetTo(coder, "tonight")
 					self.response.out.write( '<img src="' + icon + '"/><br/>' )
 					break
 		
 	self.response.out.write('			</div>\n		</div>\n	</body>\n</html>')
 	
-  def tweetTo(self, coder):
+  def tweetTo(self, coder, timeframe):
 	contactby = coder.contactmethod.split('|')[0]
 	contactname = coder.contactmethod.split('|')[1]
-	finished_format = "@" + contactname.replace('@','').replace(' ','') + ": #RainyDayCoder says it's going to rain. Time to code?"
+	finished_format = "@" + contactname.replace('@','').replace(' ','') + ": #RainyDayCoder says it's going to rain " + timeframe + ". Time to code?"
 	if(contactby == 'tweet'):
  	 	#client = twitteroauth.TwitterClient(botconfig.consumer_key, botconfig.consumer_secret, botconfig.callback_url)
 		#additional_params = {
@@ -342,12 +347,12 @@ class Region(webapp.RequestHandler):
 			sender_address = "korolev415@gmail.com"
 			subject = "Code on this Rainy Day"
 			body = '''
-It's raining where you are! Time to go to Codecademy and start coding!
+It's raining where you are ''' + timeframe + '''! Time to go to Codecademy and start coding!
 
 -- Nick'''
 			mail.send_mail(sender_address, contactname, subject, body)
 	elif(contactby == "txt"):
-		outbody = "It's raining where you are! Time to go to Codecademy and learn to code!"
+		outbody = "It's raining " + timeframe + "! Time to go to Codecademy and learn to code!"
 		account = twilio.Account(phoneconfig.account, phoneconfig.token)
 		d = {
 			'From' : phoneconfig.number,
@@ -367,7 +372,63 @@ class Why(webapp.RequestHandler):
   def get(self):
 	self.response.out.write('''<!DOCTYPE html>
 <html>
-It's awesome.
+<head>
+	<title>Rainy Day Coder: Why Learn to Code?</title>
+	<link href="/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+</head>
+<body>
+		<div class="navbar">
+			<div class="navbar-inner">
+				<div class="container">
+					<ul class="nav">
+						<li>
+							<a class="brand" href="/">
+								Rainy Day Coder
+							</a>
+						</li>
+						<li>
+							<a href="/">
+								Home
+							</a>
+						</li>
+						<li>
+							<a href="/why" class="active">
+								Why code?
+							</a>
+						</li>
+						<li>
+							<a href="#">
+								Sign In
+							</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	<div class="container">
+		<h1>Why learn to code?</h1>
+		<hr/>
+		<div class="well">
+			<p>You, yes <strong>you</strong>, can make websites, games, and time-saving scripts.</p>
+			<p>Tell the world about stuff you care about.</p>
+			<p>Help a project reach more people through interactive videos and maps.</p>
+			<p>Understand how technology works.</p>
+		</div>
+		<div class="well">
+			<h3>You are going to make awesome things</h3>
+			<h3>It's free</h3>
+		</div>
+		<div class="well" style="text-align:center;">
+			<img src="http://i.imgur.com/ToJkV.png" style="float:left"/>
+			<h2>Learn code</h2>
+			<p>on rainy nights and weekends</p>
+			<form action="/subscribe" method="GET">
+				<input id="zip" name="zip" type="text" class="span3" placeholder="ZIPCODE"/>
+				<input type="submit" value="Stay out of the rain" class="btn btn-primary" style="vertical-align:top;"/>
+			</form>
+		</div>
+	</div>
+</body>
 </html>''')
 
 class Coder(db.Model):
