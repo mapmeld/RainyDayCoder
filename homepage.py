@@ -322,17 +322,24 @@ class Region(webapp.RequestHandler):
 	contactname = coder.contactmethod.split('|')[1]
 	finished_format = "@" + contactname.replace('@','').replace(' ','') + ": #RainyDayCoder says it's going to rain. Time to code?"
 	if(contactby == 'tweet'):
- 	 	client = twitteroauth.TwitterClient(botconfig.consumer_key, botconfig.consumer_secret, botconfig.callback_url)
-		additional_params = {
-			"status": finished_format
-		}
-		result = client.make_request(
-			"http://twitter.com/statuses/update.json",
-			token=botconfig.access_token,
-			secret=botconfig.access_token_secret,
-			additional_params=additional_params,
-			method=POST)
-		logging.info(result.content)
+ 	 	#client = twitteroauth.TwitterClient(botconfig.consumer_key, botconfig.consumer_secret, botconfig.callback_url)
+		#additional_params = {
+		#	"status": finished_format
+		#}
+		#result = client.make_request(
+		#	"http://twitter.com/statuses/update.json",
+		#	token=botconfig.access_token,
+		#	secret=botconfig.access_token_secret,
+		#	additional_params=additional_params,
+		#	method=POST)
+		#logging.info(result.content)
+		logging.info("Would send Tweet about " + coder.city)
+
+class Map(webapp.RequestHandler):
+  def get(self):
+  	ll = self.request.get('ll').split(',')
+	mapimg = fetch("http://pafciu17.dev.openstreetmap.org/?module=map&center=" + ll[1] + "," + ll[0] + "&zoom=16&type=mapnik&width=500&height=250", payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content
+  	self.response.out.write(mapimg)
 
 class Why(webapp.RequestHandler):
   def get(self):
@@ -352,6 +359,7 @@ application = webapp.WSGIApplication(
                                      [('/region.*', Region),
                                      ('/why.*', Why),
                                      ('/subscribe.*', Subscribe),
+                                     ('/map.*', Map),
                                      ('/.*', HomePage)],
                                      debug=True)
 
