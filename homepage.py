@@ -5,6 +5,7 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
 from google.appengine.ext import db
 from google.appengine.api.urlfetch import fetch,GET,POST
+from google.appengine.api import mail
 import botconfig, twitteroauth
 
 class HomePage(webapp.RequestHandler):
@@ -333,7 +334,17 @@ class Region(webapp.RequestHandler):
 		#	additional_params=additional_params,
 		#	method=POST)
 		#logging.info(result.content)
-		logging.info("Would send Tweet about " + coder.city)
+		logging.info("Would send Tweet to " + contactname + " about " + coder.city)
+	elif(contactby == "mail"):
+		logging.info("Would send e-mail to " + contactname + " about " + coder.city)
+		if mail.is_email_valid(contactname):
+			sender_address = "korolev415@gmail.com"
+			subject = "Code on this Rainy Day"
+			body = '''
+It's raining where you are! Time to go to Codecademy and start coding!
+
+-- Nick'''
+			mail.send_mail(sender_address, contactname, subject, body)		
 
 class Map(webapp.RequestHandler):
   def get(self):
