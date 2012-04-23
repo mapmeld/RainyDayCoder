@@ -378,7 +378,7 @@ class Region(webapp.RequestHandler):
 		logging.info("Actually sending e-mail to " + contactname + " in " + coder.city)
 		if mail.is_email_valid(contactname):
 			sender_address = "korolev415@gmail.com"
-			subject == "Code on this Rainy Day"
+			subject = "Code on this Rainy Day"
 			if(timeframe == "tonight"):
 				subject = "Code on this Rainy Night"
 			placename = coder.city
