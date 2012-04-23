@@ -9,5 +9,9 @@ handlers:
   static_files: static/\1
   upload: static/(.*\.(gif|png|jpg|ico|js|html|rb|css|txt|xml|json|xo|xol|ogg|ogv|htm|swf|pdf))
 
+- url: /region.*
+  script: homepage.py
+  login: admin
+
 - url: /.*
   script: homepage.py

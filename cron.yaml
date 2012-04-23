@@ -5,21 +5,21 @@ cron:
   schedule: every day 17:00
 
 - description: daily check of mountain
-  url: /region?region=pacific
+  url: /region?region=mountain
   schedule: every day 16:00
   
 - description: daily check of central
-  url: /region?region=pacific
+  url: /region?region=central
   schedule: every day 15:00
 
 - description: daily check of eastern
-  url: /region?region=pacific
+  url: /region?region=eastern
   schedule: every day 14:00
 
 - description: daily check of alaska
-  url: /region?region=pacific
+  url: /region?region=alaska
   schedule: every day 18:00
 
 - description: daily check of hawaii
-  url: /region?region=pacific
+  url: /region?region=hawaii
   schedule: every day 21:00
