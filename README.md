@@ -20,7 +20,7 @@ This project is enthusiastically <strong>open source</strong> and welcomes your 
 
 TODO:
 <ul>
-<li>Check each region daily, but don't contact weekenders or recently-contacted people</li>
+<li>Confirm weekend program works</li>
 <li>Logging in and changing user settings</li>
 <li>Better answers on why to code</li>
 <li>Watch Codecademy progress on Twitter</li>

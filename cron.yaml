@@ -2,4 +2,24 @@ cron:
 
 - description: daily check of pacific
   url: /region?region=pacific
-  schedule: every 24 hours
+  schedule: every day 17:00
+
+- description: daily check of mountain
+  url: /region?region=pacific
+  schedule: every day 16:00
+  
+- description: daily check of central
+  url: /region?region=pacific
+  schedule: every day 15:00
+
+- description: daily check of eastern
+  url: /region?region=pacific
+  schedule: every day 14:00
+
+- description: daily check of alaska
+  url: /region?region=pacific
+  schedule: every day 18:00
+
+- description: daily check of hawaii
+  url: /region?region=pacific
+  schedule: every day 21:00

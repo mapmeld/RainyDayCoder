@@ -1,5 +1,5 @@
 import cgi, logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import run_wsgi_app
@@ -16,16 +16,20 @@ class HomePage(webapp.RequestHandler):
 		c.name = "Sam Pull"
 		c.city = "94103"
 		c.region = "pacific"
-		c.contactmethod = "@mapmeld"
+		c.contactmethod = "tweet|mapmeld"
 		c.weekendonly = "everyday"
+		c.contactlast = datetime.now() - timedelta(days=31)
+		c.contactsecond = datetime.now() - timedelta(days=31)
 		c.put()
 	elif(self.request.get('gen') == 'zip'):
 		c = Coder()
 		c.name = "Billy " + self.request.get('zip')
 		c.city = self.request.get('zip')
 		c.region = "pacific"
-		c.contactmethod = "@mapmeld"
+		c.contactmethod = "tweet|mapmeld"
 		c.weekendonly = "everyday"
+		c.contactlast = datetime.now() - timedelta(days=31)
+		c.contactsecond = datetime.now() - timedelta(days=31)
 		c.put()
 
 	self.response.out.write('''<!DOCTYPE html>
@@ -84,12 +88,12 @@ class HomePage(webapp.RequestHandler):
 					<p>Work on your own, or choose one of these sites:</p>
 					<ul>
 						<li>
-							<strong><a href="http://codecademy.org" target="_blank">Codecademy</a></strong> is a free site to learn JavaScript. Backed by the White House and NYC Mayor Bloomberg.
+							<strong><a href="http://codecademy.org" target="_blank">Codecademy</a></strong> introduces JavaScript in a series of lessons. Affiliated with Y-Combinator, the White House, and NYC Mayor Bloomberg.
 						</li>
-						<li>
-							<strong><a href="http://khanacademy.org" target="_blank">Khan Academy</a></strong> uses videos to teach you about JavaScript. Taught by Jon Resig, inventor of the jQuery library. Backed by the Bill and Melinda Gates Foundation.
+						<li style="color:#ccc;">
+							<strong><a href="http://khanacademy.org" target="_blank">Khan Academy</a></strong> uses videos to teach you JavaScript. Taught by John Resig, inventor of jQuery. Backed by the Bill and Melinda Gates Foundation.
 						</li>
-						<li>
+						<li style="color:#ccc;">
 							<strong><a href="http://udacity.com" target="_blank">Udacity</a></strong> has complete Computer Science courses which are online. And free. Founded by AI pioneer and Stanford professor Sebastian Thrun.
 						</li>
 					</ul>
@@ -99,7 +103,7 @@ class HomePage(webapp.RequestHandler):
 					<img src="http://farm2.staticflickr.com/1184/1084349065_3a55f1e974_m.jpg" alt="whenever there are umbrellas out" style="width:90%;"/>
 					<ul>
 						<li>
-							Rainy nights and weekends where you live
+							Rainy nights and weekends (1 or 2 per week)
 						</li>
 						<li>
 							When you're home sick
@@ -110,7 +114,7 @@ class HomePage(webapp.RequestHandler):
 					</ul>
 				</div>
 				<div class="span4">
-					<h3>How do you send reminders?</h3>
+					<h3>How do you contact me?</h3>
 					<ul>
 						<li>
 							E-mails are probably the best way
@@ -122,7 +126,7 @@ class HomePage(webapp.RequestHandler):
 							Text messages to most cell phone carriers
 						</li>
 					</ul>
-					<p>You can change cities or unsubscribe at any time.</p>
+					<p>You can <a href="/citychange">change cities</a> or <a href="/unsubscribe">unsubscribe</a> at any time.</p>
 					<iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Frainydaycoder.appspot.com&amp;send=false&amp;layout=standard&amp;width=450&amp;show_faces=false&amp;action=like&amp;colorscheme=light&amp;font&amp;height=35&amp;appId=123994207657251" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:450px; height:35px;" allowTransparency="true"></iframe>
 				</div>
 			</div>
@@ -142,17 +146,36 @@ class Subscribe(webapp.RequestHandler):
 	c = Coder()
 	c.name = self.request.get('name')
 	c.city = self.request.get('zip')
-	c.region = ''
+	cityjson = fetch("http://zip.elevenbasetwo.com/?zip=" + self.request.get('zip'), payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content
+	state = cityjson[ cityjson.find("state")  + 9 : cityjson.find("state") + 11 ]
+	if(state in [ "CA", "OR", "WA" ] ):
+		c.region = 'pacific'
+	elif(state in [ "AZ", "CO", "ID", "MT", "NV", "NM", "ND", "SD", "TX", "UT", "WY" ] ):
+		c.region = 'mountain'
+	elif(state in [ "AL", "AR", "IL", "IN", "IA", "KS", "LA", "MI", "MN", "MS", "MO", "NE", "OH", "OK", "WI" ] ):
+		c.region = 'central'
+	elif(state in [ "CT", "DE", "DC", "FL", "GA", "KY", "ME", "MD", "MA", "NH", "NJ", "NY", "NC", "PA", "RI", "SC", "TN", "VT", "VA", "WV" ] ):
+		c.region = 'eastern'
+	elif(state in [ "AK" ] ):
+		c.region = 'alaska'
+	elif(state in [ "HI" ] ):
+		c.region = 'hawaii'
 	c.contactmethod = self.request.get('contact') + "|" + self.request.get('contactname')
 	c.weekendonly = self.request.get('wkendonly')
+	c.contactlast = datetime.now() - timedelta(days=31)
+	c.contactsecond = datetime.now() - timedelta(days=31)
 	c.put()
 	self.redirect('/confirm')
 
   def get(self):
 	cityjson = fetch("http://zip.elevenbasetwo.com/?zip=" + self.request.get('zip'), payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content
 	cityname = cityjson[ cityjson.find('city') + 8: len(cityjson) - 2 ]
-	cityname = cityname[0] + cityname[ 1 : len(cityname) ].lower()
-	cityname = cityname + ", " + cityjson[ cityjson.find("state")  + 9 : cityjson.find("state") + 11 ]
+	cityname = cityname.split(' ')
+	index = 0
+	for word in cityname:
+		cityname[index] = word[0] + word[ 1 : len(word) ].lower()
+		index = index + 1
+	cityname = ' '.join(cityname) + ", " + cityjson[ cityjson.find("state")  + 9 : cityjson.find("state") + 11 ]
 
 	self.response.out.write('''<!DOCTYPE html>
 <html>
@@ -205,6 +228,8 @@ class Subscribe(webapp.RequestHandler):
 			<div class="row">
 				<div class="well">
 					<h3>Some things you should know</h3>
+					We'll contact you at most twice in a week.
+					<br/>
 					<a href="http://maps.howstuffworks.com/united-states-annual-rainfall-map.htm" target="_blank">Total rainfall map</a>
 					<br/>
 					<a href="http://www.rssweather.com/climate/" target="_blank">Rain over the course of the year</a>
@@ -308,7 +333,7 @@ class Region(webapp.RequestHandler):
 							self.tweetTo(coder, "today")
 					self.response.out.write( '<img src="' + icon + '"/><br/>' )
 
-		elif(coder.weekendonly != "true"): # will code any night
+		elif(coder.weekendonly != "on"): # will code any night
 			today = days[datetime.now().weekday()] + " Night"
 			wjson = wjson.split("icon_url")
 			for day in wjson:
@@ -325,6 +350,14 @@ class Region(webapp.RequestHandler):
 	self.response.out.write('			</div>\n		</div>\n	</body>\n</html>')
 	
   def tweetTo(self, coder, timeframe):
+	if(datetime.now() - coder.contactsecond < timedelta(days=7) ):
+		# no spam rule: this coder was contacted twice in the past 7 days
+		return
+	else:
+		# OK to contact! update coder days
+		coder.contactsecond = coder.contactlast
+		coder.contactlast = datetime.now()
+		coder.put()
 	contactby = coder.contactmethod.split('|')[0]
 	contactname = coder.contactmethod.split('|')[1]
 	finished_format = "@" + contactname.replace('@','').replace(' ','') + ": #RainyDayCoder says it's going to rain " + timeframe + ". Time to code?"
@@ -342,12 +375,27 @@ class Region(webapp.RequestHandler):
 		#logging.info(result.content)
 		logging.info("Would send Tweet to " + contactname + " in " + coder.city)
 	elif(contactby == "mail"):
-		logging.info("Would send e-mail to " + contactname + " in " + coder.city)
+		logging.info("Actually sending e-mail to " + contactname + " in " + coder.city)
 		if mail.is_email_valid(contactname):
 			sender_address = "korolev415@gmail.com"
-			subject = "Code on this Rainy Day"
+			subject == "Code on this Rainy Day"
+			if(timeframe == "tonight"):
+				subject = "Code on this Rainy Night"
+			placename = coder.city
+			try:
+				cityjson = fetch("http://zip.elevenbasetwo.com/?zip=" + coder.city, payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content
+				cityname = cityjson[ cityjson.find('city') + 8: len(cityjson) - 2 ]
+				cityname = cityname.split(' ')
+				index = 0
+				for word in cityname:
+					cityname[index] = word[0] + word[ 1 : len(word) ].lower()
+					index = index + 1
+				placename = ' '.join(cityname) + ", " + cityjson[ cityjson.find("state")  + 9 : cityjson.find("state") + 11 ]
+			except:
+				# just keep coder.city, the zipcode
+				bummer = 1
 			body = '''
-It's raining where you are ''' + timeframe + '''! Time to go to Codecademy and start coding!
+It's raining in ''' + placename + ' ' + timeframe + '''! Time to go to Codecademy and start coding!
 
 -- Nick'''
 			mail.send_mail(sender_address, contactname, subject, body)
@@ -437,6 +485,8 @@ class Coder(db.Model):
 	region = db.StringProperty()
 	contactmethod = db.StringProperty()
 	weekendonly = db.StringProperty()
+	contactlast = db.DateTimeProperty()
+	contactsecond = db.DateTimeProperty()
 
 application = webapp.WSGIApplication(
                                      [('/region.*', Region),
