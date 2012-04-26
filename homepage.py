@@ -180,7 +180,7 @@ class Subscribe(webapp.RequestHandler):
 		for word in cityname:
 			cityname[index] = word[0].upper() + word[ 1: len(word) ]
 			index = index + 1
-		cityname = cityname + ", " + self.request.headers["X-AppEngine-Region"].upper()
+		cityname = ' '.join(cityname) + ", " + self.request.headers["X-AppEngine-Region"].upper()
 	else:
 		cityjson = fetch("http://zip.elevenbasetwo.com/?zip=" + self.request.get('zip'), payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content
 		cityname = cityjson[ cityjson.find('city') + 8: len(cityjson) - 2 ]
