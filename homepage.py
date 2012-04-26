@@ -11,26 +11,12 @@ import phoneconfig, twilio
 
 class HomePage(webapp.RequestHandler):
   def get(self):
-	if(self.request.get('gen') == 'coder'):
-		c = Coder()
-		c.name = "Sam Pull"
-		c.city = "94103"
-		c.region = "pacific"
-		c.contactmethod = "tweet|mapmeld"
-		c.weekendonly = "everyday"
-		c.contactlast = datetime.now() - timedelta(days=31)
-		c.contactsecond = datetime.now() - timedelta(days=31)
-		c.put()
-	elif(self.request.get('gen') == 'zip'):
-		c = Coder()
-		c.name = "Billy " + self.request.get('zip')
-		c.city = self.request.get('zip')
-		c.region = "pacific"
-		c.contactmethod = "tweet|mapmeld"
-		c.weekendonly = "everyday"
-		c.contactlast = datetime.now() - timedelta(days=31)
-		c.contactsecond = datetime.now() - timedelta(days=31)
-		c.put()
+	cityname = self.request.headers["X-AppEngine-City"].split(" ")
+	index = 0
+	for word in cityname:
+		cityname[index] = word[0].upper() + word[ 1: len(word) ]
+		index = index + 1
+	cityname = ' '.join(cityname) + ", " + self.request.headers["X-AppEngine-Region"].upper()
 
 	self.response.out.write('''<!DOCTYPE html>
 <html>
@@ -78,7 +64,7 @@ class HomePage(webapp.RequestHandler):
 				<h1>Learn code</h1>
 				<p>on rainy nights and weekends</p>
 				<form action="/subscribe" method="GET">
-					<input id="zip" name="zip" type="text" class="span3" placeholder="ZIPCODE"/>
+					<span style="font-weight:bold;vertical-align:center;font-size:12pt;">''' + cityname + '''</span> or <input id="zip" name="zip" type="text" class="span2" placeholder="ZIPCODE"/>
 					<input type="submit" value="Stay out of the rain" class="btn btn-primary" style="vertical-align:top;"/>
 				</form>
 			</div>
@@ -453,6 +439,12 @@ class Map(webapp.RequestHandler):
 
 class Why(webapp.RequestHandler):
   def get(self):
+	cityname = self.request.headers["X-AppEngine-City"].split(" ")
+	index = 0
+	for word in cityname:
+		cityname[index] = word[0].upper() + word[ 1: len(word) ]
+		index = index + 1
+	cityname = ' '.join(cityname) + ", " + self.request.headers["X-AppEngine-Region"].upper()
 	self.response.out.write('''<!DOCTYPE html>
 <html>
 <head>
@@ -506,7 +498,8 @@ class Why(webapp.RequestHandler):
 			<h2>Learn code</h2>
 			<p>on rainy nights and weekends</p>
 			<form action="/subscribe" method="GET">
-				<input id="zip" name="zip" type="text" class="span3" placeholder="ZIPCODE"/>
+				<span style="font-weight:bold;vertical-align:center;font-size:12pt;">''' + cityname + '''</span> or <input id="zip" name="zip" type="text" class="span2" placeholder="ZIPCODE"/>
+				<br/>
 				<input type="submit" value="Stay out of the rain" class="btn btn-primary" style="vertical-align:top;"/>
 			</form>
 		</div>
