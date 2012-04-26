@@ -146,12 +146,17 @@ class Subscribe(webapp.RequestHandler):
 	c = Coder()
 	c.name = self.request.get('name')
 	c.city = self.request.get('zip')
-	cityjson = fetch("http://zip.elevenbasetwo.com/?zip=" + self.request.get('zip'), payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content
-	state = cityjson[ cityjson.find("state")  + 9 : cityjson.find("state") + 11 ]
+	if(self.request.get('zip') == ''):
+		c.city = self.request.headers["X-AppEngine-City"] + ", " + self.request.headers["X-AppEngine-Region"]
+		state = self.request.headers["X-AppEngine-Region"]
+	else:
+		cityjson = fetch("http://zip.elevenbasetwo.com/?zip=" + self.request.get('zip'), payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content
+		state = cityjson[ cityjson.find("state")  + 9 : cityjson.find("state") + 11 ]
+
 	if(state in [ "CA", "OR", "WA" ] ):
 		c.region = 'pacific'
 	elif(state in [ "AZ", "CO", "ID", "MT", "NV", "NM", "ND", "SD", "TX", "UT", "WY" ] ):
-		c.region = 'mountain'
+			c.region = 'mountain'
 	elif(state in [ "AL", "AR", "IL", "IN", "IA", "KS", "LA", "MI", "MN", "MS", "MO", "NE", "OH", "OK", "WI" ] ):
 		c.region = 'central'
 	elif(state in [ "CT", "DE", "DC", "FL", "GA", "KY", "ME", "MD", "MA", "NH", "NJ", "NY", "NC", "PA", "RI", "SC", "TN", "VT", "VA", "WV" ] ):
@@ -168,14 +173,23 @@ class Subscribe(webapp.RequestHandler):
 	self.redirect('/confirm')
 
   def get(self):
-	cityjson = fetch("http://zip.elevenbasetwo.com/?zip=" + self.request.get('zip'), payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content
-	cityname = cityjson[ cityjson.find('city') + 8: len(cityjson) - 2 ]
-	cityname = cityname.split(' ')
-	index = 0
-	for word in cityname:
-		cityname[index] = word[0] + word[ 1 : len(word) ].lower()
-		index = index + 1
-	cityname = ' '.join(cityname) + ", " + cityjson[ cityjson.find("state")  + 9 : cityjson.find("state") + 11 ]
+  	cityname = ""
+	if(self.request.get('zip') == ''):
+		cityname = self.request.headers["X-AppEngine-City"].split(" ")
+		index = 0
+		for word in cityname:
+			cityname[index] = word[0].upper() + word[ 1: len(word) ]
+			index = index + 1
+		cityname = cityname + ", " + self.request.headers["X-AppEngine-Region"].upper()
+	else:
+		cityjson = fetch("http://zip.elevenbasetwo.com/?zip=" + self.request.get('zip'), payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content
+		cityname = cityjson[ cityjson.find('city') + 8: len(cityjson) - 2 ]
+		cityname = cityname.split(' ')
+		index = 0
+		for word in cityname:
+			cityname[index] = word[0] + word[ 1 : len(word) ].lower()
+			index = index + 1
+		cityname = ' '.join(cityname) + ", " + cityjson[ cityjson.find("state")  + 9 : cityjson.find("state") + 11 ]
 
 	self.response.out.write('''<!DOCTYPE html>
 <html>
@@ -265,7 +279,7 @@ class Subscribe(webapp.RequestHandler):
 class Region(webapp.RequestHandler):
   def get(self):
 	days = [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" ]
-	coders = Coder.gql('WHERE region = :1', self.request.get('region'))
+	coders = Coder.gql('WHERE region = :1 ORDER BY city', self.request.get('region'))
 	self.response.out.write('''<!DOCTYPE html>
 <html>
 	<head>
@@ -298,8 +312,20 @@ class Region(webapp.RequestHandler):
 		</div>
 		<div class="row">
 			<div class="span10">\n''')
+	lastcity = " | "
 	for coder in coders:
-		wjson = fetch("http://api.wunderground.com/api/d5f91ff9e5d13cd9/forecast/q/" + coder.city + ".json", payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content
+		wjson = ""
+		if(lastcity.split("|")[0] == coder.city):
+			if(lastcity.split("|")[1] == "NO"):
+				# already tried this city, and it wasn't raining
+				continue
+			else:
+				# already tried this city, and it was raining
+				wjson = lastcity[ lastcity.find('|') + 1 : len(lastcity) ]
+		else:
+			# new zipcode, check for rain
+			wjson = fetch("http://api.wunderground.com/api/d5f91ff9e5d13cd9/forecast/q/" + coder.city + ".json", payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content
+
 		if(days[datetime.now().weekday()] == "Saturday"):
 			# check daytime first
 			wjson = wjson.split("icon_url")
@@ -308,14 +334,18 @@ class Region(webapp.RequestHandler):
 					icon = day[ 3 : day.find('title') ]
 					icon = icon[ 0 : icon.find('"') ]
 					if(icon.find('rain') > -1 or icon.find('storm') > -1):
-						# need to check that rainfall isn't so small!
+						# TODO: need to check that rainfall isn't so small!
+						lastcity = coder.city + "|" + 'icon_url'.join(wjson)
 						if(day.find("Saturday Night") > -1):
 							self.response.out.write('Rain tonight in ' + coder.city + '!')
 							self.tweetTo(coder, "tonight")
 						else:
 							self.response.out.write('Rain today in ' + coder.city + '!')						
 							self.tweetTo(coder, "today")
+					else:
+						lastcity = coder.city + "|NO"					
 					self.response.out.write( '<img src="' + icon + '"/><br/>' )
+
 		elif(days[datetime.now().weekday()] == "Sunday"):
 			# check daytime first
 			wjson = wjson.split("icon_url")
@@ -324,13 +354,15 @@ class Region(webapp.RequestHandler):
 					icon = day[ 3 : day.find('title') ]
 					icon = icon[ 0 : icon.find('"') ]
 					if(icon.find('rain') > -1 or icon.find('storm') > -1):
-						# need to check that rainfall isn't so small!
+						lastcity = coder.city + "|" + 'icon_url'.join(wjson)
 						if(day.find("Sunday Night") > -1):
 							self.response.out.write('Rain tonight in ' + coder.city + '!')
 							self.tweetTo(coder, "tonight")
 						else:
 							self.response.out.write('Rain today in ' + coder.city + '!')
 							self.tweetTo(coder, "today")
+					else:
+						lastcity = coder.city + "|NO"
 					self.response.out.write( '<img src="' + icon + '"/><br/>' )
 
 		elif(coder.weekendonly != "on"): # will code any night
@@ -341,9 +373,12 @@ class Region(webapp.RequestHandler):
 					icon = day[ 3 : day.find('title') ]
 					icon = icon[ 0 : icon.find('"') ]
 					if(icon.find('rain') > -1 or icon.find('storm') > -1):
-						# need to check that rainfall isn't so small!
+						lastcity = coder.city + "|" + 'icon_url'.join(wjson)
 						self.response.out.write('Rain tonight in ' + coder.city + '!')
 						self.tweetTo(coder, "tonight")
+					else:
+						lastcity = coder.city + "|NO"
+						
 					self.response.out.write( '<img src="' + icon + '"/><br/>' )
 					break
 		

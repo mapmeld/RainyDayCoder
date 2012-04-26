@@ -1,0 +1,6 @@
+indexes:
+
+- kind: Coder
+  properties:
+  - name: region
+  - name: city
