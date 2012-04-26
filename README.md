@@ -1,3 +1,5 @@
+<img src="http://rainydaycoder.appspot.com/logo1.jpg" style="float:left;" width="250"/>
+
 <h3>Summary</h3>
 <b>Rainy Day Coder</b> is an app that encourages you to complete your next lesson on Codecademy on rainy nights and weekends.
 

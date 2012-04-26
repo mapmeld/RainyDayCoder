@@ -60,7 +60,7 @@ class HomePage(webapp.RequestHandler):
 		</div>
 		<div class="container">
 			<div class="hero-unit" style="text-align:center;">
-				<img src="http://i.imgur.com/ToJkV.png" style="float:left"/>
+				<img src="logo1.jpg" style="float:left;width:140px;"/>
 				<h1>Learn code</h1>
 				<p>on rainy nights and weekends</p>
 				<form action="/subscribe" method="GET">
@@ -103,13 +103,13 @@ class HomePage(webapp.RequestHandler):
 					<h3>How do you contact me?</h3>
 					<ul>
 						<li>
-							E-mails are probably the best way
+							Get e-mail
 						</li>
 						<li>
-							We can send you a Tweet
+							We can send Tweets
 						</li>
 						<li>
-							Text messages to most cell phone carriers
+							Text messages to most cell phones
 						</li>
 					</ul>
 					<p>You can <a href="/citychange">change cities</a> or <a href="/unsubscribe">unsubscribe</a> at any time.</p>
@@ -220,7 +220,7 @@ class Subscribe(webapp.RequestHandler):
 		<div class="container">
 			<div class="row">
 				<div class="hero-unit" style="text-align:center;">
-					<img src="http://i.imgur.com/ToJkV.png" style="float:left"/>
+					<img src="logo1.jpg" style="float:left;width:115px;"/>
 					<h1>Coding in ''' + cityname + '''</h1>
 					<p>on rainy nights and weekends</p>
 				</div>
@@ -249,6 +249,12 @@ class Subscribe(webapp.RequestHandler):
 					<div class="well">
 						<h3>Weekends only?</h3>
 						<label class="checkbox"><input type="checkbox" name="wkendonly"/>Weekends only</label>
+					</div>
+					<div class="well">
+						<h3>Track your progress?</h3>
+						Receiving messages by text or e-mail? Add your Twitter account so we know when you finish a lesson.
+						<br/>
+						<input name="twittername" class="x-large"/>
 					</div>
 					<input type="submit" class="btn btn-info" value="Sign Up for Rainy Day Coder"/>
 				</form>
@@ -494,7 +500,7 @@ class Why(webapp.RequestHandler):
 			<h3>It's free</h3>
 		</div>
 		<div class="well" style="text-align:center;">
-			<img src="http://i.imgur.com/ToJkV.png" style="float:left"/>
+			<img src="logo1.jpg" style="float:left;width:115px;"/>
 			<h2>Learn code</h2>
 			<p>on rainy nights and weekends</p>
 			<form action="/subscribe" method="GET">
