@@ -252,9 +252,9 @@ class Subscribe(webapp.RequestHandler):
 					</div>
 					<div class="well">
 						<h3>Track your progress?</h3>
-						Receiving messages by text or e-mail? Add your Twitter account so we know when you finish a lesson.
+						If you'd like us to track your progress on Codecademy, <a href="http://www.codecademy.com/register/sign_up" target="_blank">create an account</a> and paste your profile link here.
 						<br/>
-						<input name="twittername" class="x-large"/>
+						<input name="codecademyname" class="x-large" placeholder="http://www.codecademy.com/profiles/yourname"/>
 					</div>
 					<input type="submit" class="btn btn-info" value="Sign Up for Rainy Day Coder"/>
 				</form>

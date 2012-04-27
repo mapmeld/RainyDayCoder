@@ -23,11 +23,9 @@ This project is enthusiastically <strong>open source</strong> and welcomes your 
 <h3>TODO</h3>
 <ul>
 <li>Confirm weekend program works</li>
-<li>Logging in and changing user settings</li>
+<li>Unsubscribing, changing cities</li>
 <li>Better answers on why to code</li>
-<li>Scaling and sorting: one API request per zipcode</li>
 <li>Rain minimums: how often does it rain 1cm?</li>
-<li>Sign in by city and not just zipcode</li>
 <li>Watch Codecademy progress on Twitter</li>
 <li>Connect to Khan Academy's CS videos</li>
 <li>Connect to the Stanford AI course videos</li>
