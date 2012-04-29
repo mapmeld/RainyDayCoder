@@ -132,6 +132,7 @@ class Subscribe(webapp.RequestHandler):
 	c = Coder()
 	c.name = self.request.get('name')
 	c.city = self.request.get('zip')
+	c.codecademyname = self.request.get('codecademyname')
 	if(self.request.get('zip') == ''):
 		c.city = self.request.headers["X-AppEngine-City"] + ", " + self.request.headers["X-AppEngine-Region"]
 		state = self.request.headers["X-AppEngine-Region"]
@@ -226,20 +227,11 @@ class Subscribe(webapp.RequestHandler):
 				</div>
 			</div>
 			<div class="row">
-				<div class="well">
-					<h3>Some things you should know</h3>
-					We'll contact you at most twice in a week.
-					<br/>
-					<a href="http://maps.howstuffworks.com/united-states-annual-rainfall-map.htm" target="_blank">Total rainfall map</a>
-					<br/>
-					<a href="http://www.rssweather.com/climate/" target="_blank">Rain over the course of the year</a>
-				</div>
-			</div>
-			<div class="row">
 				<form action="/subscriber" method="POST">
 					<input type="hidden" name="zip" value="''' + cgi.escape(self.request.get('zip')) + '''"/>
 					<div class="well">
 						<h3>How do we contact you?</h3>
+						We'll contact you at most twice in a week.<br/>
 						<label class="radio"><input type="radio" name="contact" value="mail" checked="checked"/>E-mail</label>
 						<label class="radio"><input type="radio" name="contact" value="tweet"/>Twitter</label>
 						<label class="radio"><input type="radio" name="contact" value="txt"/>Text</label>
@@ -252,9 +244,9 @@ class Subscribe(webapp.RequestHandler):
 					</div>
 					<div class="well">
 						<h3>Track your progress?</h3>
-						If you'd like us to track your progress on Codecademy, <a href="http://www.codecademy.com/register/sign_up" target="_blank">create an account</a> and paste your profile link here.
+						If you'd like us to track your progress on <a href="http://codecademy.com" target="_blank">Codecademy</a>, create an account there and paste your profile link here.
 						<br/>
-						<input name="codecademyname" class="x-large" placeholder="http://www.codecademy.com/profiles/yourname"/>
+						<input name="codecademyname" class="x-large" placeholder="http://www.codecademy.com/profiles/yourname" style="width:300pt;"/>
 					</div>
 					<input type="submit" class="btn btn-info" value="Sign Up for Rainy Day Coder"/>
 				</form>
@@ -269,6 +261,7 @@ class Subscribe(webapp.RequestHandler):
 </html>''')
 
 class Region(webapp.RequestHandler):
+
   def get(self):
 	days = [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" ]
 	coders = Coder.gql('WHERE region = :1 ORDER BY city', self.request.get('region'))
@@ -375,7 +368,38 @@ class Region(webapp.RequestHandler):
 					break
 		
 	self.response.out.write('			</div>\n		</div>\n	</body>\n</html>')
+
+  def badgeStatus(self, coder):
+	# badges sourced from CSS on http://cdn.codecademy.com/assets/application-ltr-75dbc02d22023f50a85125d4f34c3102.css
+	badgeOrder = [ "first-lesson", "exercises-10", "exercises-25", "exercises-50", "exercises-100", "exercises-200", "exercises-500", "exercises-1000", "exercises-10000", "course-programming-intro", "course-fizzbuzz", "course-functions_in_javascript", "course-hello_new_york", "course-functions-in-javascript-2-0", "course-conditionals-in-javascript", "course-calculating-the-costs-of-running-a-business", "course-conditionals-application", "course-primitives-development-course", "course-blackjack-part-1", "course-spencer-sandbox", "course-building-an-address-book", "course-olympic-trials", "course-objects-ii", "default-cash-register", "default-loops", "course-dice-game-part-2-getting-dicey", "course-blackjack-part-2", "course-fizzbuzz-return-of-the-modulus", "course-intro-to-object-oriented-programming", "course-cash-register-mark-ii", "default-more-arrays", "default-rock-paper-scissors", "default-recursion", "default-recursive-functions", "course-blackjack-part-3", "course-html-one-o-one", "course-week-3-html-project"  ]
 	
+	# "course-javascript-intro" not yet placed
+
+	if(coder.codecademyname.find('codecademy.com/profiles/') == -1):
+		# not a valid Codecademy profile URL
+		return "not-valid"
+
+	badgescrape = fetch("http://www.codecademy.com/profiles/" + coder.codecademyname.split('codecademy.com/profiles/')[1], payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content.split("span class='badge ")
+	if(len(badgescrape) == 1):
+		# first lesson
+		return "first-lesson"
+	index = -1
+	hasbadges = [ ]
+	for badge in badgescrape:
+		index = index + 1
+		if(index == 0):
+			# first segment has nothing
+			continue
+		badgename = badge[ 0: badge.find("'>") ]
+		hasbadges.append(badgename)
+
+	for badgename in badgeOrder:
+		if(badgename not in hasbadges):
+			if(badgename.find('exercises-') > -1 and (badgename.find('-50') > -1 or badgename.find('-100') > -1 or badgename.find('-200') > -1 or badgename.find('-500') > -1 or badgename.find('-1000') > -1or badgename.find('-10000') > -1 )):
+				# lots of exercises not needed to continue
+				continue
+			return badgename
+
   def tweetTo(self, coder, timeframe):
 	if(datetime.now() - coder.contactsecond < timedelta(days=7) ):
 		# no spam rule: this coder was contacted twice in the past 7 days
@@ -387,22 +411,33 @@ class Region(webapp.RequestHandler):
 		coder.put()
 	contactby = coder.contactmethod.split('|')[0]
 	contactname = coder.contactmethod.split('|')[1]
-	finished_format = "@" + contactname.replace('@','').replace(' ','') + ": #RainyDayCoder says it's going to rain " + timeframe + ". Time to code?"
+	
+	nextBadge = self.badgeStatus( coder )
+	if(nextBadge != "not-valid"):
+		if(nextBadge.find('course-') > -1):
+			nextBadge = "http://www.codecademy.com/courses/" + nextBadge[ 7 : len(nextBadge) ]
+		else:
+			nextBadge = "http://www.codecademy.com/courses/programming-intro"
+
 	if(contactby == 'tweet'):
- 	 	#client = twitteroauth.TwitterClient(botconfig.consumer_key, botconfig.consumer_secret, botconfig.callback_url)
-		#additional_params = {
-		#	"status": finished_format
-		#}
-		#result = client.make_request(
-		#	"http://twitter.com/statuses/update.json",
-		#	token=botconfig.access_token,
-		#	secret=botconfig.access_token_secret,
-		#	additional_params=additional_params,
-		#	method=POST)
+		logging.info("Sending Tweet to " + contactname + " in " + coder.city)
+		finished_format = "@" + contactname.replace('@','').replace(' ','') + ": #RainyDayCoder says it's going to rain " + timeframe + ". Time to code?"
+		if(nextBadge != "not-valid"):
+			finished_format = finishedFormat + " " + nextBadge		
+		client = twitteroauth.TwitterClient(botconfig.consumer_key, botconfig.consumer_secret, botconfig.callback_url)
+		additional_params = {
+			"status": finished_format
+		}
+		result = client.make_request(
+			"http://twitter.com/statuses/update.json",
+		token=botconfig.access_token,
+			secret=botconfig.access_token_secret,
+			additional_params=additional_params,
+			method=POST)
 		#logging.info(result.content)
-		logging.info("Would send Tweet to " + contactname + " in " + coder.city)
+
 	elif(contactby == "mail"):
-		logging.info("Actually sending e-mail to " + contactname + " in " + coder.city)
+		logging.info("Sending e-mail to " + contactname + " in " + coder.city)
 		if mail.is_email_valid(contactname):
 			sender_address = "korolev415@gmail.com"
 			subject = "Code on this Rainy Day"
@@ -410,7 +445,8 @@ class Region(webapp.RequestHandler):
 				subject = "Code on this Rainy Night"
 			placename = coder.city
 			try:
-				cityjson = fetch("http://zip.elevenbasetwo.com/?zip=" + coder.city, payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content
+				# attempt zipcode decode
+				cityjson = fetch("http://zip.elevenbasetwo.com/?zip=" + str( int( placename) ), payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content
 				cityname = cityjson[ cityjson.find('city') + 8: len(cityjson) - 2 ]
 				cityname = cityname.split(' ')
 				index = 0
@@ -419,23 +455,34 @@ class Region(webapp.RequestHandler):
 					index = index + 1
 				placename = ' '.join(cityname) + ", " + cityjson[ cityjson.find("state")  + 9 : cityjson.find("state") + 11 ]
 			except:
-				# just keep coder.city, the zipcode
-				bummer = 1
-			body = '''
-It's raining in ''' + placename + ' ' + timeframe + '''! Time to go to Codecademy and start coding!
+				# just keep coder.city
+				fullnamealready = 1
+			body = ""
+			if(nextBadge == "not-valid"):
+				body = '''
+It's raining in ''' + cgi.escape(placename) + ' ' + timeframe + '''! Time to go to Codecademy and start coding!
 
--- Nick'''
+-- Nick
+Rainy Day Coder ( http://rainydaycoder.appspot.com )'''
+			else:
+				body = '''
+It's raining in ''' + cgi.escape(placename) + ' ' + timeframe + '''! Time to go to Codecademy and start coding!
+
+Pick up where you left off, at ''' + nextBadge + '''
+
+-- Nick
+Rainy Day Coder ( http://rainydaycoder.appspot.com )'''
 			mail.send_mail(sender_address, contactname, subject, body)
 	elif(contactby == "txt"):
-		outbody = "It's raining " + timeframe + "! Time to go to Codecademy and learn to code!"
+		outbody = "It's raining " + timeframe + "! Time to go to Codecademy and learn to code! -RainyDayCoder.appspot.com"
 		account = twilio.Account(phoneconfig.account, phoneconfig.token)
 		d = {
 			'From' : phoneconfig.number,
 			'To' : contactname,
 			'Body' : outbody,
 		}
-		#gotdata = account.request('/%s/Accounts/%s/SMS/Messages' % ('2008-08-01', phoneconfig.account), 'POST', d)
-		logging.info("Would send text to " + contactname + " in " + coder.city)
+		gotdata = account.request('/%s/Accounts/%s/SMS/Messages' % ('2008-08-01', phoneconfig.account), 'POST', d)
+		logging.info("Sent text to " + contactname + " in " + coder.city)
 
 class Map(webapp.RequestHandler):
   def get(self):
@@ -521,6 +568,7 @@ class Coder(db.Model):
 	weekendonly = db.StringProperty()
 	contactlast = db.DateTimeProperty()
 	contactsecond = db.DateTimeProperty()
+	codecademyname = db.StringProperty()
 
 application = webapp.WSGIApplication(
                                      [('/region.*', Region),
