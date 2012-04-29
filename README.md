@@ -17,6 +17,7 @@ This project is enthusiastically <strong>open source</strong> and welcomes your 
 <li>Create a botconfig.py file with info about your Twitter API account. This file is not shared with GitHub because it is in the .gitignore file</li>
 <li>Register a number on Twilio to send SMS messages.</li>
 <li>Put your Twilio number, account, and token into phoneconfig.py This file is in .gitignore and not shared with GitHub</li>
+<li>Register a key for the Weather Underground API. Insert into http://api.wunderground.com/api/___ line of homepage.py</li>
 <li>Upload the app to Google App Engine</li>
 </ol>
 
