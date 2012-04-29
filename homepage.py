@@ -310,18 +310,26 @@ class Region(webapp.RequestHandler):
 		else:
 			# new zipcode, check for rain
 			wjson = fetch("http://api.wunderground.com/api/d5f91ff9e5d13cd9/forecast/q/" + coder.city + ".json", payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content
+			
+		dayAdjust = datetime.now().weekday()
 
-		if(days[datetime.now().weekday()] == "Saturday"):
+		# AppEngine has UTC time; let cron add or subtract a day to read the right forecast
+		if(self.request.get('dayAdjust') == "minus1"):
+			dayAdjust = (dayAdjust + 6) % 7
+		elif(self.request.get('dayAdjust') == "plus1"):
+			dayAdjust = (dayAdjust + 8) % 7
+
+		if(days[dayAdjust] == "Saturday" or days[dayAdjust] == "Sunday"):
 			# check daytime first
 			wjson = wjson.split("icon_url")
 			for day in wjson:
-				if(day.find("Saturday") > -1):
+				if(day.find(days[dayAdjust]) > -1):
 					icon = day[ 3 : day.find('title') ]
 					icon = icon[ 0 : icon.find('"') ]
 					if(icon.find('rain') > -1 or icon.find('storm') > -1):
 						# TODO: need to check that rainfall isn't so small!
 						lastcity = coder.city + "|" + 'icon_url'.join(wjson)
-						if(day.find("Saturday Night") > -1):
+						if(day.find(days[dayAdjust] + " Night") > -1):
 							self.response.out.write('Rain tonight in ' + coder.city + '!')
 							self.tweetTo(coder, "tonight")
 						else:
@@ -331,27 +339,8 @@ class Region(webapp.RequestHandler):
 						lastcity = coder.city + "|NO"					
 					self.response.out.write( '<img src="' + icon + '"/><br/>' )
 
-		elif(days[datetime.now().weekday()] == "Sunday"):
-			# check daytime first
-			wjson = wjson.split("icon_url")
-			for day in wjson:
-				if(day.find("Sunday") > -1):
-					icon = day[ 3 : day.find('title') ]
-					icon = icon[ 0 : icon.find('"') ]
-					if(icon.find('rain') > -1 or icon.find('storm') > -1):
-						lastcity = coder.city + "|" + 'icon_url'.join(wjson)
-						if(day.find("Sunday Night") > -1):
-							self.response.out.write('Rain tonight in ' + coder.city + '!')
-							self.tweetTo(coder, "tonight")
-						else:
-							self.response.out.write('Rain today in ' + coder.city + '!')
-							self.tweetTo(coder, "today")
-					else:
-						lastcity = coder.city + "|NO"
-					self.response.out.write( '<img src="' + icon + '"/><br/>' )
-
 		elif(coder.weekendonly != "on"): # will code any night
-			today = days[datetime.now().weekday()] + " Night"
+			today = days[dayAdjust] + " Night"
 			wjson = wjson.split("icon_url")
 			for day in wjson:
 				if(day.find(today) > -1):

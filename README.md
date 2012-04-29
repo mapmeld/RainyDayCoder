@@ -26,7 +26,6 @@ This project is enthusiastically <strong>open source</strong> and welcomes your 
 <li>Unsubscribing, changing cities</li>
 <li>Better answers on why to code</li>
 <li>Rain minimums: how often does it rain 1cm?</li>
-<li>Watch Codecademy progress on Twitter</li>
 <li>Connect to Khan Academy's CS videos</li>
 <li>Connect to the Stanford AI course videos</li>
 </ul>
