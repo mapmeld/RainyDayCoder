@@ -368,6 +368,8 @@ class Region(webapp.RequestHandler):
 		if(coder.codecademyname.find('codecademy.com/profiles/') == -1):
 			# not a valid Codecademy profile URL
 			return "not-valid"
+	else:
+		return "not-valid"
 
 	badgescrape = fetch("http://www.codecademy.com/profiles/" + coder.codecademyname.split('codecademy.com/profiles/')[1], payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content.split("span class='badge ")
 	if(len(badgescrape) == 1):
