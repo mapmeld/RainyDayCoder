@@ -11,7 +11,11 @@ import phoneconfig, twilio
 
 class HomePage(webapp.RequestHandler):
   def get(self):
-	cityname = self.request.headers["X-AppEngine-City"].split(" ")
+  	cityname = ""
+	try:
+		cityname = self.request.headers["X-AppEngine-City"].split(" ")
+	except:
+		cityname = ""
 	index = 0
 	for word in cityname:
 		cityname[index] = word[0].upper() + word[ 1: len(word) ]
@@ -162,12 +166,15 @@ class Subscribe(webapp.RequestHandler):
   def get(self):
   	cityname = ""
 	if(self.request.get('zip') == ''):
-		cityname = self.request.headers["X-AppEngine-City"].split(" ")
-		index = 0
-		for word in cityname:
-			cityname[index] = word[0].upper() + word[ 1: len(word) ]
-			index = index + 1
-		cityname = ' '.join(cityname) + ", " + self.request.headers["X-AppEngine-Region"].upper()
+		try:
+			cityname = self.request.headers["X-AppEngine-City"].split(" ")
+			index = 0
+			for word in cityname:
+				cityname[index] = word[0].upper() + word[ 1: len(word) ]
+				index = index + 1
+			cityname = ' '.join(cityname) + ", " + self.request.headers["X-AppEngine-Region"].upper()
+		except:
+			cityname = ""
 	else:
 		cityjson = fetch("http://zip.elevenbasetwo.com/?zip=" + self.request.get('zip'), payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content
 		cityname = cityjson[ cityjson.find('city') + 8: len(cityjson) - 2 ]
@@ -484,7 +491,11 @@ class Map(webapp.RequestHandler):
 
 class Why(webapp.RequestHandler):
   def get(self):
-	cityname = self.request.headers["X-AppEngine-City"].split(" ")
+  	cityname = ""
+	try:
+		cityname = self.request.headers["X-AppEngine-City"].split(" ")
+	except:
+		cityname = ""
 	index = 0
 	for word in cityname:
 		cityname[index] = word[0].upper() + word[ 1: len(word) ]

@@ -25,6 +25,7 @@ This project is enthusiastically <strong>open source</strong> and welcomes your 
 <ul>
 <li>Confirm weekend program works</li>
 <li>Unsubscribing, changing cities</li>
+<li>Confirmation e-mail, text, or Tweet sent to new users</li>
 <li>Better answers on why to code</li>
 <li>Rain minimums: how often does it rain 1cm?</li>
 <li>Connect to Khan Academy's CS videos</li>
