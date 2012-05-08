@@ -171,8 +171,8 @@ You will receive a confirmation message.
 </body>
 </html>''')
 
-	contactby = coder.contactmethod.split('|')[0]
-	contactname = coder.contactmethod.split('|')[1]
+	contactby = c.contactmethod.split('|')[0]
+	contactname = c.contactmethod.split('|')[1]
 
 	if(contactby == 'tweet'):
 		logging.info("Sending confirmation Tweet to " + contactname)
