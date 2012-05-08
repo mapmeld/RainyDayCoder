@@ -161,7 +161,50 @@ class Subscribe(webapp.RequestHandler):
 	c.contactlast = datetime.now() - timedelta(days=31)
 	c.contactsecond = datetime.now() - timedelta(days=31)
 	c.put()
-	self.redirect('/confirm')
+	
+	self.response.out.write('''<!DOCTYPE html>
+<html>
+<body>
+Sign-up confirmed.
+<br/><br/>
+You will receive a confirmation message.
+</body>
+</html>''')
+
+	contactby = coder.contactmethod.split('|')[0]
+	contactname = coder.contactmethod.split('|')[1]
+
+	if(contactby == 'tweet'):
+		logging.info("Sending confirmation Tweet to " + contactname)
+		finished_format = "@" + contactname.replace('@','').replace(' ','') + ": Thanks for signing up with #RainyDayCoder!"
+		client = twitteroauth.TwitterClient(botconfig.consumer_key, botconfig.consumer_secret, botconfig.callback_url)
+		additional_params = {
+			"status": finished_format
+		}
+		result = client.make_request(
+			"http://twitter.com/statuses/update.json",
+		token=botconfig.access_token,
+			secret=botconfig.access_token_secret,
+			additional_params=additional_params,
+			method=POST)
+
+	elif(contactby == "mail"):
+		logging.info("Sending confirmation e-mail to " + contactname)
+		if mail.is_email_valid(contactname):
+			sender_address = "korolev415@gmail.com"
+			subject = "Rainy Day Coder Confirmation"
+			mail.send_mail(sender_address, contactname, subject, "You are now signed up for Rainy Day Coder!")
+
+	elif(contactby == "txt"):
+		outbody = "You're now signed up to learn JavaScript on rainy days. RainyDayCoder.appspot.com"
+		account = twilio.Account(phoneconfig.account, phoneconfig.token)
+		d = {
+			'From' : phoneconfig.number,
+			'To' : contactname,
+			'Body' : outbody,
+		}
+		gotdata = account.request('/%s/Accounts/%s/SMS/Messages' % ('2008-08-01', phoneconfig.account), 'POST', d)
+		logging.info("Sent confirmation text to " + contactname)
 
   def get(self):
   	cityname = ""
