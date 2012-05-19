@@ -14,13 +14,13 @@ class HomePage(webapp.RequestHandler):
   	cityname = ""
 	try:
 		cityname = self.request.headers["X-AppEngine-City"].split(" ")
+		index = 0
+		for word in cityname:
+			cityname[index] = word[0].upper() + word[ 1: len(word) ]
+			index = index + 1
+		cityname = ' '.join(cityname) + ", " + self.request.headers["X-AppEngine-Region"].upper()
 	except:
 		cityname = ""
-	index = 0
-	for word in cityname:
-		cityname[index] = word[0].upper() + word[ 1: len(word) ]
-		index = index + 1
-	cityname = ' '.join(cityname) + ", " + self.request.headers["X-AppEngine-Region"].upper()
 
 	self.response.out.write('''<!DOCTYPE html>
 <html>
@@ -130,6 +130,393 @@ class HomePage(webapp.RequestHandler):
 		</div>
 	</body>
 </html>''')
+
+class Unsubscribe(webapp.RequestHandler):
+  def post(self):
+	coders = None
+  	if(self.request.get('contactname').find('@') == 0):
+		coders = Coder.gql('WHERE contactmethod = :1', "tweet|" + self.request.get('contactname')[ 1 : len( self.request.get('contactname') ) ])
+		for c in coders:
+			contactname = c.contactmethod
+			cityname = c.city
+			c.delete()
+			self.confirm_change(contactname, cityname)
+		self.response.out.write('Your request has been made, and a confirmation message will be sent.')
+
+	elif(self.request.get('contactname').find('@') > 0):
+		coders = Coder.gql('WHERE contactmethod = :1', "mail|" + self.request.get('contactname') )
+		for c in coders:
+			contactname = c.contactmethod
+			cityname = c.city
+			c.delete()
+			self.confirm_change(contactname, cityname)
+		self.response.out.write('Your request has been made, and a confirmation message will be sent.')
+
+	else:
+		coders = Coder.gql('WHERE contactmethod = :1', "tweet|" + self.request.get('contactname') )
+		if (coders.count() > 0):
+			for c in coders:
+				contactname = c.contactmethod
+				cityname = c.city
+				c.delete()
+				self.confirm_change(contactname, cityname)
+			self.response.out.write('Your request has been made, and a confirmation message will be sent.')
+
+		coders = Coder.gql('WHERE contactmethod = :1', "mail|" + self.request.get('contactname') )
+		if (coders.count() > 0):
+			for c in coders:
+				contactname = c.contactmethod
+				cityname = c.city
+				c.delete()
+				self.confirm_change(contactname, cityname)
+			self.response.out.write('Your request has been made, and a confirmation message will be sent.')
+
+		coders = Coder.gql('WHERE contactmethod = :1', "txt|" + self.request.get('contactname') )
+		if (coders.count() > 0):
+			for c in coders:
+				contactname = c.contactmethod
+				cityname = c.city
+				c.delete()
+				self.confirm_change(contactname, cityname)
+			self.response.out.write('Your request has been made, and a confirmation message will be sent.')
+
+  def get(self):
+	self.response.out.write('''<!DOCTYPE html>
+<html>
+	<head>
+		<title>Rainy Day Coder: Unsubscribe</title>
+		<link href="/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+	</head>
+	<body>
+		<div class="navbar">
+			<div class="navbar-inner">
+				<div class="container">
+					<ul class="nav">
+						<li>
+							<a class="brand" href="/">
+								Rainy Day Coder
+							</a>
+						</li>
+						<li>
+							<a href="/">
+								Home
+							</a>
+						</li>
+						<li>
+							<a href="/why" class="active">
+								Why code?
+							</a>
+						</li>
+						<li>
+							<a href="#">
+								Sign In
+							</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	<div class="container">
+		<h1>Unsubscribing</h1>
+		<hr/>
+		<div class="well">
+			<form action="/unsubscribe" method="POST">
+				<label>E-mail, Twitter handle, or Phone Number we used to contact you:</label>
+				<input id="contactname" name="contactname" type="text" class="span2" placeholder="Contact"/>
+				<br/>
+				<input type="submit" value="Unsubscribe" class="btn btn-primary" style="vertical-align:top;"/>
+			</form>
+		</div>
+		<div class="well">
+			We hope you code with us again sometime!
+		</div>
+	</div>
+</body>
+</html>''')
+
+  def confirm_change(self, contactmethod, city):
+	contactby = contactmethod.split('|')[0]
+	contactname = contactmethod.split('|')[1]
+	city = city.split(" ")
+	index = 0
+	for word in city:
+		if(index == len(city) - 1):
+			city[index] = word.upper()
+		else:
+			city[index] = word[0].upper() + word[ 1: len(word) ]
+		index = index + 1
+	city = ' '.join(city)
+
+	if(contactby == 'tweet'):
+		logging.info("Sending unsubscribe Tweet to " + contactname)
+		finished_format = "@" + contactname.replace('@','').replace(' ','') + ": You are now unsubscribed from #RainyDayCoder."
+		client = twitteroauth.TwitterClient(botconfig.consumer_key, botconfig.consumer_secret, botconfig.callback_url)
+		additional_params = {
+			"status": finished_format
+		}
+		result = client.make_request(
+			"http://twitter.com/statuses/update.json",
+		token=botconfig.access_token,
+			secret=botconfig.access_token_secret,
+			additional_params=additional_params,
+			method=POST)
+
+	elif(contactby == "mail"):
+		logging.info("Sending unsubscribe e-mail to " + contactname)
+		if mail.is_email_valid(contactname):
+			sender_address = "korolev415@gmail.com"
+			subject = "RainyDayCoder: Unsubscribed"
+			mail.send_mail(sender_address, contactname, subject, "You are now unsubscribed from Rainy Day Coder.")
+
+	elif(contactby == "txt"):
+		outbody = "You are now unsubscribed from RainyDayCoder.appspot.com"
+		account = twilio.Account(phoneconfig.account, phoneconfig.token)
+		d = {
+			'From' : phoneconfig.number,
+			'To' : contactname,
+			'Body' : outbody,
+		}
+		gotdata = account.request('/%s/Accounts/%s/SMS/Messages' % ('2008-08-01', phoneconfig.account), 'POST', d)
+		logging.info("Sent unsubscribe text to " + contactname)
+
+class CityChange(webapp.RequestHandler):
+  def post(self):
+	coders = None
+  	if(self.request.get('contactname').find('@') == 0):
+		coders = Coder.gql('WHERE contactmethod = :1', "tweet|" + self.request.get('contactname')[ 1 : len( self.request.get('contactname') ) ])
+		for c in coders:
+			state = ''
+			c.city = self.request.get('zip')
+			if(self.request.get('zip') == ''):
+				c.city = self.request.headers["X-AppEngine-City"] + ", " + self.request.headers["X-AppEngine-Region"]
+				state = self.request.headers["X-AppEngine-Region"]
+
+			if(state in [ "CA", "OR", "WA" ] ):
+				c.region = 'pacific'
+			elif(state in [ "AZ", "CO", "ID", "MT", "NV", "NM", "ND", "SD", "TX", "UT", "WY" ] ):
+				c.region = 'mountain'
+			elif(state in [ "AL", "AR", "IL", "IN", "IA", "KS", "LA", "MI", "MN", "MS", "MO", "NE", "OH", "OK", "WI" ] ):
+				c.region = 'central'
+			elif(state in [ "CT", "DE", "DC", "FL", "GA", "KY", "ME", "MD", "MA", "NH", "NJ", "NY", "NC", "PA", "RI", "SC", "TN", "VT", "VA", "WV" ] ):
+				c.region = 'eastern'
+			elif(state in [ "AK" ] ):
+				c.region = 'alaska'
+			elif(state in [ "HI" ] ):
+				c.region = 'hawaii'
+			c.put()
+			self.confirm_change(c, c.city)
+		self.response.out.write('Your request has been made, and a confirmation message will be sent.')
+
+	elif(self.request.get('contactname').find('@') > 0):
+		
+		coders = Coder.gql('WHERE contactmethod = :1', "mail|" + self.request.get('contactname') )
+		for c in coders:
+			state = ''
+			c.city = self.request.get('zip')
+			if(self.request.get('zip') == ''):
+				c.city = self.request.headers["X-AppEngine-City"] + ", " + self.request.headers["X-AppEngine-Region"]
+				state = self.request.headers["X-AppEngine-Region"]
+
+			if(state in [ "CA", "OR", "WA" ] ):
+				c.region = 'pacific'
+			elif(state in [ "AZ", "CO", "ID", "MT", "NV", "NM", "ND", "SD", "TX", "UT", "WY" ] ):
+				c.region = 'mountain'
+			elif(state in [ "AL", "AR", "IL", "IN", "IA", "KS", "LA", "MI", "MN", "MS", "MO", "NE", "OH", "OK", "WI" ] ):
+				c.region = 'central'
+			elif(state in [ "CT", "DE", "DC", "FL", "GA", "KY", "ME", "MD", "MA", "NH", "NJ", "NY", "NC", "PA", "RI", "SC", "TN", "VT", "VA", "WV" ] ):
+				c.region = 'eastern'
+			elif(state in [ "AK" ] ):
+				c.region = 'alaska'
+			elif(state in [ "HI" ] ):
+				c.region = 'hawaii'
+			c.put()
+			self.confirm_change(c, c.city)
+		self.response.out.write('Your request has been made, and a confirmation message will be sent.')
+
+	else:
+		coders = Coder.gql('WHERE contactmethod = :1', "tweet|" + self.request.get('contactname') )
+		if (coders.count() > 0):
+			for c in coders:
+				state = ''
+				c.city = self.request.get('zip')
+				if(self.request.get('zip') == ''):
+					c.city = self.request.headers["X-AppEngine-City"] + ", " + self.request.headers["X-AppEngine-Region"]
+					state = self.request.headers["X-AppEngine-Region"]
+
+				if(state in [ "CA", "OR", "WA" ] ):
+					c.region = 'pacific'
+				elif(state in [ "AZ", "CO", "ID", "MT", "NV", "NM", "ND", "SD", "TX", "UT", "WY" ] ):
+					c.region = 'mountain'
+				elif(state in [ "AL", "AR", "IL", "IN", "IA", "KS", "LA", "MI", "MN", "MS", "MO", "NE", "OH", "OK", "WI" ] ):
+					c.region = 'central'
+				elif(state in [ "CT", "DE", "DC", "FL", "GA", "KY", "ME", "MD", "MA", "NH", "NJ", "NY", "NC", "PA", "RI", "SC", "TN", "VT", "VA", "WV" ] ):
+					c.region = 'eastern'
+				elif(state in [ "AK" ] ):
+					c.region = 'alaska'
+				elif(state in [ "HI" ] ):
+					c.region = 'hawaii'
+				c.put()
+				self.confirm_change(c, c.city)
+			self.response.out.write('Your request has been made, and a confirmation message will be sent.')
+
+		coders = Coder.gql('WHERE contactmethod = :1', "mail|" + self.request.get('contactname') )
+		if (coders.count() > 0):
+			for c in coders:
+				state = ''
+				c.city = self.request.get('zip')
+				if(self.request.get('zip') == ''):
+					c.city = self.request.headers["X-AppEngine-City"] + ", " + self.request.headers["X-AppEngine-Region"]
+					state = self.request.headers["X-AppEngine-Region"]
+
+				if(state in [ "CA", "OR", "WA" ] ):
+					c.region = 'pacific'
+				elif(state in [ "AZ", "CO", "ID", "MT", "NV", "NM", "ND", "SD", "TX", "UT", "WY" ] ):
+					c.region = 'mountain'
+				elif(state in [ "AL", "AR", "IL", "IN", "IA", "KS", "LA", "MI", "MN", "MS", "MO", "NE", "OH", "OK", "WI" ] ):
+					c.region = 'central'
+				elif(state in [ "CT", "DE", "DC", "FL", "GA", "KY", "ME", "MD", "MA", "NH", "NJ", "NY", "NC", "PA", "RI", "SC", "TN", "VT", "VA", "WV" ] ):
+					c.region = 'eastern'
+				elif(state in [ "AK" ] ):
+					c.region = 'alaska'
+				elif(state in [ "HI" ] ):
+					c.region = 'hawaii'
+				c.put()
+				self.confirm_change(c, c.city)
+			self.response.out.write('Your request has been made, and a confirmation message will be sent.')
+
+		coders = Coder.gql('WHERE contactmethod = :1', "txt|" + self.request.get('contactname') )
+		if (coders.count() > 0):
+			for c in coders:
+				state = ''
+				c.city = self.request.get('zip')
+				if(self.request.get('zip') == ''):
+					c.city = self.request.headers["X-AppEngine-City"] + ", " + self.request.headers["X-AppEngine-Region"]
+					state = self.request.headers["X-AppEngine-Region"]
+
+				if(state in [ "CA", "OR", "WA" ] ):
+					c.region = 'pacific'
+				elif(state in [ "AZ", "CO", "ID", "MT", "NV", "NM", "ND", "SD", "TX", "UT", "WY" ] ):
+					c.region = 'mountain'
+				elif(state in [ "AL", "AR", "IL", "IN", "IA", "KS", "LA", "MI", "MN", "MS", "MO", "NE", "OH", "OK", "WI" ] ):
+					c.region = 'central'
+				elif(state in [ "CT", "DE", "DC", "FL", "GA", "KY", "ME", "MD", "MA", "NH", "NJ", "NY", "NC", "PA", "RI", "SC", "TN", "VT", "VA", "WV" ] ):
+					c.region = 'eastern'
+				elif(state in [ "AK" ] ):
+					c.region = 'alaska'
+				elif(state in [ "HI" ] ):
+					c.region = 'hawaii'
+				c.put()
+				self.confirm_change(c, c.city)
+			self.response.out.write('Your request has been made, and a confirmation message will be sent.')
+
+  def get(self):
+  	cityname = ""
+	try:
+		cityname = self.request.headers["X-AppEngine-City"].split(" ")
+		index = 0
+		for word in cityname:
+			cityname[index] = word[0].upper() + word[ 1: len(word) ]
+			index = index + 1
+		cityname = ' '.join(cityname) + ", " + self.request.headers["X-AppEngine-Region"].upper()
+	except:
+		cityname = ""
+	self.response.out.write('''<!DOCTYPE html>
+<html>
+	<head>
+		<title>Rainy Day Coder: Change Cities</title>
+		<link href="/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+	</head>
+	<body>
+		<div class="navbar">
+			<div class="navbar-inner">
+				<div class="container">
+					<ul class="nav">
+						<li>
+							<a class="brand" href="/">
+								Rainy Day Coder
+							</a>
+						</li>
+						<li>
+							<a href="/">
+								Home
+							</a>
+						</li>
+						<li>
+							<a href="/why" class="active">
+								Why code?
+							</a>
+						</li>
+						<li>
+							<a href="#">
+								Sign In
+							</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	<div class="container">
+		<h1>Changing Cities</h1>
+		<hr/>
+		<div class="well">
+			<form action="/citychange" method="POST">
+				<label>E-mail, Twitter handle, or Phone Number we used to contact you:</label>
+				<input id="contactname" name="contactname" type="text" class="span2" placeholder="Contact"/>
+				<br/>
+				<label>New city or zipcode:</label>
+				<span style="font-weight:bold;vertical-align:center;font-size:12pt;">''' + cityname + '''</span> or <input id="zip" name="zip" type="text" class="span2" placeholder="ZIPCODE"/>
+				<br/>
+				<input type="submit" value="Change City" class="btn btn-primary" style="vertical-align:top;"/>
+			</form>
+		</div>
+	</div>
+</body>
+</html>''')
+
+  def confirm_change(self, c, city):
+	contactby = c.contactmethod.split('|')[0]
+	contactname = c.contactmethod.split('|')[1]
+	city = city.split(" ")
+	index = 0
+	for word in city:
+		if(index == len(city) - 1):
+			city[index] = word.upper()
+		else:
+			city[index] = word[0].upper() + word[ 1: len(word) ]
+		index = index + 1
+	city = ' '.join(city)
+
+	if(contactby == 'tweet'):
+		logging.info("Sending city change Tweet to " + contactname)
+		finished_format = "@" + contactname.replace('@','').replace(' ','') + ": Your #RainyDayCoder city has been changed."
+		client = twitteroauth.TwitterClient(botconfig.consumer_key, botconfig.consumer_secret, botconfig.callback_url)
+		additional_params = {
+			"status": finished_format
+		}
+		result = client.make_request(
+			"http://twitter.com/statuses/update.json",
+		token=botconfig.access_token,
+			secret=botconfig.access_token_secret,
+			additional_params=additional_params,
+			method=POST)
+
+	elif(contactby == "mail"):
+		logging.info("Sending city change e-mail to " + contactname)
+		if mail.is_email_valid(contactname):
+			sender_address = "korolev415@gmail.com"
+			subject = "RainyDayCoder: City Changed"
+			mail.send_mail(sender_address, contactname, subject, "You are now signed up for Rainy Day Coder in " + city + "!")
+
+	elif(contactby == "txt"):
+		outbody = "You changed your coding city to " + city + ". RainyDayCoder.appspot.com"
+		account = twilio.Account(phoneconfig.account, phoneconfig.token)
+		d = {
+			'From' : phoneconfig.number,
+			'To' : contactname,
+			'Body' : outbody,
+		}
+		gotdata = account.request('/%s/Accounts/%s/SMS/Messages' % ('2008-08-01', phoneconfig.account), 'POST', d)
+		logging.info("Sent city change text to " + contactname)
 
 class Subscribe(webapp.RequestHandler):
   def post(self):
@@ -295,6 +682,8 @@ You will receive a confirmation message.
 					<div class="well">
 						<h3>Track your progress?</h3>
 						If you'd like us to track your progress on <a href="http://codecademy.com" target="_blank">Codecademy</a>, create an account there and paste your profile link here.
+						<br/>
+						On your <a href="http://www.codecademy.com/edit_account/basic_info" target="_blank">Account page</a>, you must set <i>Who can view my profile</i> to Everyone.
 						<br/>
 						<input name="codecademyname" class="x-large" placeholder="http://www.codecademy.com/profiles/yourname" style="width:300pt;"/>
 					</div>
@@ -537,13 +926,13 @@ class Why(webapp.RequestHandler):
   	cityname = ""
 	try:
 		cityname = self.request.headers["X-AppEngine-City"].split(" ")
+		index = 0
+		for word in cityname:
+			cityname[index] = word[0].upper() + word[ 1: len(word) ]
+			index = index + 1
+		cityname = ' '.join(cityname) + ", " + self.request.headers["X-AppEngine-Region"].upper()
 	except:
 		cityname = ""
-	index = 0
-	for word in cityname:
-		cityname[index] = word[0].upper() + word[ 1: len(word) ]
-		index = index + 1
-	cityname = ' '.join(cityname) + ", " + self.request.headers["X-AppEngine-Region"].upper()
 	self.response.out.write('''<!DOCTYPE html>
 <html>
 <head>
@@ -585,7 +974,7 @@ class Why(webapp.RequestHandler):
 		<div class="well">
 			<p>You, yes <strong>you</strong>, can make websites, games, and time-saving scripts.</p>
 			<p>Tell the world about stuff you care about.</p>
-			<p>Help a project reach more people through interactive videos and maps.</p>
+			<p>Help a movement reach more people through interactive videos and maps.</p>
 			<p>Understand how technology works.</p>
 		</div>
 		<div class="well">
@@ -621,6 +1010,8 @@ application = webapp.WSGIApplication(
                                      ('/why.*', Why),
                                      ('/subscribe.*', Subscribe),
                                      ('/map.*', Map),
+                                     ('/citychange.*', CityChange),
+                                     ('/unsubscribe.*', Unsubscribe),
                                      ('/.*', HomePage)],
                                      debug=True)
 
