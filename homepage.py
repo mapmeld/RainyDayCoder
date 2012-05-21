@@ -264,7 +264,7 @@ class Unsubscribe(webapp.RequestHandler):
 	elif(contactby == "mail"):
 		logging.info("Sending unsubscribe e-mail to " + contactname)
 		if mail.is_email_valid(contactname):
-			sender_address = "korolev415@gmail.com"
+			sender_address = "nickd@codeforamerica.org"
 			subject = "RainyDayCoder: Unsubscribed"
 			mail.send_mail(sender_address, contactname, subject, "You are now unsubscribed from Rainy Day Coder.")
 
@@ -503,7 +503,7 @@ class CityChange(webapp.RequestHandler):
 	elif(contactby == "mail"):
 		logging.info("Sending city change e-mail to " + contactname)
 		if mail.is_email_valid(contactname):
-			sender_address = "korolev415@gmail.com"
+			sender_address = "nickd@codeforamerica.org"
 			subject = "RainyDayCoder: City Changed"
 			mail.send_mail(sender_address, contactname, subject, "You are now signed up for Rainy Day Coder in " + city + "!")
 
@@ -578,7 +578,7 @@ You will receive a confirmation message.
 	elif(contactby == "mail"):
 		logging.info("Sending confirmation e-mail to " + contactname)
 		if mail.is_email_valid(contactname):
-			sender_address = "korolev415@gmail.com"
+			sender_address = "nickd@codeforamerica.org"
 			subject = "Rainy Day Coder Confirmation"
 			mail.send_mail(sender_address, contactname, subject, "You are now signed up for Rainy Day Coder!")
 
@@ -608,12 +608,15 @@ You will receive a confirmation message.
 	else:
 		cityjson = fetch("http://zip.elevenbasetwo.com/?zip=" + self.request.get('zip'), payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content
 		cityname = cityjson[ cityjson.find('city') + 8: len(cityjson) - 2 ]
+		cityname = cityname[ 0 : cityname.find('"') ]
+		logging.info(cityname)
 		cityname = cityname.split(' ')
 		index = 0
 		for word in cityname:
 			cityname[index] = word[0] + word[ 1 : len(word) ].lower()
 			index = index + 1
 		cityname = ' '.join(cityname) + ", " + cityjson[ cityjson.find("state")  + 9 : cityjson.find("state") + 11 ]
+		logging.info(cityname)
 
 	self.response.out.write('''<!DOCTYPE html>
 <html>
@@ -870,7 +873,7 @@ class Region(webapp.RequestHandler):
 	elif(contactby == "mail"):
 		logging.info("Sending e-mail to " + contactname + " in " + coder.city)
 		if mail.is_email_valid(contactname):
-			sender_address = "korolev415@gmail.com"
+			sender_address = "nickd@codeforamerica.org"
 			subject = "Code on this Rainy Day"
 			if(timeframe == "tonight"):
 				subject = "Code on this Rainy Night"
