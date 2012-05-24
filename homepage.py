@@ -53,11 +53,6 @@ class HomePage(webapp.RequestHandler):
 								Why code?
 							</a>
 						</li>
-						<li>
-							<a href="#">
-								Sign In
-							</a>
-						</li>
 					</ul>
 				</div>
 			</div>
@@ -205,11 +200,6 @@ class Unsubscribe(webapp.RequestHandler):
 						<li>
 							<a href="/why" class="active">
 								Why code?
-							</a>
-						</li>
-						<li>
-							<a href="#">
-								Sign In
 							</a>
 						</li>
 					</ul>
@@ -446,11 +436,6 @@ class CityChange(webapp.RequestHandler):
 								Why code?
 							</a>
 						</li>
-						<li>
-							<a href="#">
-								Sign In
-							</a>
-						</li>
 					</ul>
 				</div>
 			</div>
@@ -649,11 +634,6 @@ You will receive a confirmation message.
 								Why code?
 							</a>
 						</li>
-						<li>
-							<a href="#">
-								Sign In
-							</a>
-						</li>
 					</ul>
 				</div>
 			</div>
@@ -726,11 +706,6 @@ class Region(webapp.RequestHandler):
 						<li>
 							<a class="active" href="/">
 								Home
-							</a>
-						</li>
-						<li>
-							<a href="#">
-								Sign In
 							</a>
 						</li>
 					</ul>
@@ -960,11 +935,6 @@ class Why(webapp.RequestHandler):
 						<li>
 							<a href="/why" class="active">
 								Why code?
-							</a>
-						</li>
-						<li>
-							<a href="#">
-								Sign In
 							</a>
 						</li>
 					</ul>
