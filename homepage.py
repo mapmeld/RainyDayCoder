@@ -857,12 +857,14 @@ class Region(webapp.RequestHandler):
 				# attempt zipcode decode
 				cityjson = fetch("http://zip.elevenbasetwo.com/?zip=" + str( int( placename) ), payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content
 				cityname = cityjson[ cityjson.find('city') + 8: len(cityjson) - 2 ]
+				cityname = cityname[ 0 : cityname.find('"') ]
 				cityname = cityname.split(' ')
 				index = 0
 				for word in cityname:
 					cityname[index] = word[0] + word[ 1 : len(word) ].lower()
 					index = index + 1
 				placename = ' '.join(cityname) + ", " + cityjson[ cityjson.find("state")  + 9 : cityjson.find("state") + 11 ]
+
 			except:
 				# just keep coder.city
 				fullnamealready = 1
