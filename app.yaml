@@ -1,7 +1,7 @@
 application: rainydaycoder
 version: 1
 runtime: python27
-threadsafe: false
+threadsafe: true
 api_version: 1
 
 handlers:
@@ -11,8 +11,8 @@ handlers:
   upload: static/(.*\.(gif|png|jpg|ico|js|html|rb|css|txt|xml|json|xo|xol|ogg|ogv|htm|swf|pdf))
 
 - url: /region.*
-  script: homepage.py
+  script: homepage.app
   login: admin
 
 - url: /.*
-  script: homepage.py
+  script: homepage.app

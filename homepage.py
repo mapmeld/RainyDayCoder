@@ -1,15 +1,14 @@
 import cgi, logging
 from datetime import datetime, timedelta
 
-from google.appengine.ext import webapp
-from google.appengine.ext.webapp.util import run_wsgi_app
+import webapp2
 from google.appengine.ext import db
 from google.appengine.api.urlfetch import fetch,GET,POST
 from google.appengine.api import mail
 import botconfig, twitteroauth
 import phoneconfig, twilio
 
-class HomePage(webapp.RequestHandler):
+class HomePage(webapp2.RequestHandler):
   def get(self):
   	cityname = ""
 	try:
@@ -126,7 +125,7 @@ class HomePage(webapp.RequestHandler):
 	</body>
 </html>''')
 
-class Unsubscribe(webapp.RequestHandler):
+class Unsubscribe(webapp2.RequestHandler):
   def post(self):
 	coders = None
   	if(self.request.get('contactname').find('@') == 0):
@@ -269,7 +268,7 @@ class Unsubscribe(webapp.RequestHandler):
 		gotdata = account.request('/%s/Accounts/%s/SMS/Messages' % ('2008-08-01', phoneconfig.account), 'POST', d)
 		logging.info("Sent unsubscribe text to " + contactname)
 
-class CityChange(webapp.RequestHandler):
+class CityChange(webapp2.RequestHandler):
   def post(self):
 	coders = None
   	if(self.request.get('contactname').find('@') == 0):
@@ -503,7 +502,7 @@ class CityChange(webapp.RequestHandler):
 		gotdata = account.request('/%s/Accounts/%s/SMS/Messages' % ('2008-08-01', phoneconfig.account), 'POST', d)
 		logging.info("Sent city change text to " + contactname)
 
-class Subscribe(webapp.RequestHandler):
+class Subscribe(webapp2.RequestHandler):
   def post(self):
 	c = Coder()
 	c.name = self.request.get('name')
@@ -682,7 +681,7 @@ You will receive a confirmation message.
 	</body>
 </html>''')
 
-class Region(webapp.RequestHandler):
+class Region(webapp2.RequestHandler):
 
   def get(self):
 	days = [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" ]
@@ -895,13 +894,13 @@ Rainy Day Coder ( http://rainydaycoder.appspot.com )'''
 		gotdata = account.request('/%s/Accounts/%s/SMS/Messages' % ('2008-08-01', phoneconfig.account), 'POST', d)
 		logging.info("Sent text to " + contactname + " in " + coder.city)
 
-class Map(webapp.RequestHandler):
+class Map(webapp2.RequestHandler):
   def get(self):
   	ll = self.request.get('ll').split(',')
 	mapimg = fetch("http://pafciu17.dev.openstreetmap.org/?module=map&center=" + ll[1] + "," + ll[0] + "&zoom=16&type=mapnik&width=500&height=250", payload=None, method=GET, headers={}, allow_truncated=False, follow_redirects=True).content
   	self.response.out.write(mapimg)
 
-class Why(webapp.RequestHandler):
+class Why(webapp2.RequestHandler):
   def get(self):
   	cityname = ""
 	try:
@@ -980,7 +979,7 @@ class Coder(db.Model):
 	contactsecond = db.DateTimeProperty()
 	codecademyname = db.StringProperty()
 
-application = webapp.WSGIApplication(
+app = webapp2.WSGIApplication(
                                      [('/region.*', Region),
                                      ('/why.*', Why),
                                      ('/subscribe.*', Subscribe),
@@ -989,9 +988,3 @@ application = webapp.WSGIApplication(
                                      ('/unsubscribe.*', Unsubscribe),
                                      ('/.*', HomePage)],
                                      debug=True)
-
-def main():
-  run_wsgi_app(application)
-
-if __name__ == "__main__":
-  main()
